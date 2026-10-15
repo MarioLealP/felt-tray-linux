@@ -183,7 +183,10 @@ mod tests {
 
     #[test]
     fn position_round_trips() {
-        let dir = std::env::temp_dir().join(format!("felt-notices-{}", std::process::id()));
+        // a private dir under target/, not the shared temp dir
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("target/test-tmp")
+            .join(format!("notices-{}", std::process::id()));
         let p = dir.join("notices.json");
         assert_eq!(load_last(&p), None);
         save_last(&p, 42);
