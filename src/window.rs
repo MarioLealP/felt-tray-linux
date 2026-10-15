@@ -44,6 +44,7 @@ impl ChatWindow {
         target: &EventLoopWindowTarget<UiEvent>,
         ctx: &mut WebContext,
         s: &WindowSetup,
+        fragment: Option<&str>,
     ) -> Result<Self> {
         let window = WindowBuilder::new()
             .with_title("Felt")
@@ -58,7 +59,10 @@ impl ChatWindow {
         );
         let (nav_hosts, popup_hosts) = (s.hosts.clone(), s.hosts.clone());
         let webview = WebViewBuilder::new_with_web_context(ctx)
-            .with_url(s.app_url.as_str())
+            .with_url(match fragment {
+                Some(f) => format!("{}{f}", s.app_url.as_str().split('#').next().unwrap_or("")),
+                None => s.app_url.to_string(),
+            })
             .with_initialization_script(bridge_script(&origin))
             .with_ipc_handler(move |req| {
                 // Linux reports the main frame's URL here; only the app itself may talk to the tray.

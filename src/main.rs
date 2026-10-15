@@ -7,6 +7,8 @@ mod bus;
 mod chat;
 mod config;
 mod core;
+mod notices;
+mod notify;
 mod tray;
 mod window;
 
@@ -24,6 +26,8 @@ use crate::window::{ChatWindow, WindowSetup};
 #[derive(Debug)]
 pub enum UiEvent {
     ShowChat,
+    /// Open the chat window at a place in the app, e.g. `#systems/12` (a pop-up's details).
+    OpenAt(String),
     Quit,
     /// A `text_chat` call from the app finished; hand the result back to its promise.
     Resolve {
@@ -63,10 +67,10 @@ fn main() -> Result<()> {
     } else {
         None
     };
-    let status_tray = tray.clone();
+    let (status_tray, ping_core) = (tray.clone(), core.clone());
     rt.spawn(async move {
         loop {
-            let online = core.ping().await;
+            let online = ping_core.ping().await;
             status.set(online);
             if let Some(t) = &status_tray {
                 t.update(|t| t.online = Some(online)).await;
@@ -74,6 +78,16 @@ fn main() -> Result<()> {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
+
+    match rt.block_on(notify::Notifier::connect()) {
+        Ok(n) => notices::start(
+            core.clone(),
+            n,
+            proxy.clone(),
+            config::data_dir()?.join("notices.json"),
+        ),
+        Err(e) => tracing::warn!("no desktop notifications, her alerts won't pop up: {e}"),
+    }
 
     let setup = WindowSetup {
         app_url: cfg.app_url.parse().context("app_url is not a URL")?,
@@ -88,11 +102,15 @@ fn main() -> Result<()> {
     event_loop.run(move |event, target, flow| {
         *flow = ControlFlow::Wait;
         match event {
-            Event::UserEvent(UiEvent::ShowChat) => {
+            Event::UserEvent(e @ (UiEvent::ShowChat | UiEvent::OpenAt(_))) => {
                 // ksni can't take the bar's xdg-activation token, so an existing window can't raise
                 // itself on Wayland; a fresh window always maps in front (the app reloads its history).
+                let fragment = match &e {
+                    UiEvent::OpenAt(f) => Some(f.as_str()),
+                    _ => None,
+                };
                 win = None;
-                match ChatWindow::open(target, &mut ctx, &setup) {
+                match ChatWindow::open(target, &mut ctx, &setup, fragment) {
                     Ok(w) => win = Some(w),
                     Err(e) => tracing::error!("can't open the chat window: {e:#}"),
                 }

@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.104"
+futures-util = { version = "0.3.34", default-features = false }
 ksni = "0.3.6"
 png = "0.18.1"
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "http2", "json"] }

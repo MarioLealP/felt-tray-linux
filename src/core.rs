@@ -102,6 +102,39 @@ impl FeltCore {
         })
     }
 
+    pub async fn latest_notice(&self) -> Result<u64> {
+        let r = self
+            .client()?
+            .get(format!("{}/v1/notices/latest", self.base))
+            .timeout(Duration::from_secs(15))
+            .send()
+            .await?
+            .error_for_status()?;
+        let v: serde_json::Value = r.json().await?;
+        v["id"].as_u64().context("no id in /v1/notices/latest")
+    }
+
+    pub async fn notices_after(&self, after: u64) -> Result<Vec<crate::notices::Notice>> {
+        let r = self
+            .client()?
+            .get(format!("{}/v1/notices?after={after}", self.base))
+            .timeout(Duration::from_secs(15))
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(r.json().await?)
+    }
+
+    pub async fn mark_handled(&self, incident: u64) -> Result<bool> {
+        let r = self
+            .client()?
+            .post(format!("{}/v1/incidents/{incident}/handled", self.base))
+            .timeout(Duration::from_secs(15))
+            .send()
+            .await?;
+        Ok(r.status().is_success())
+    }
+
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.
     pub async fn ping(&self) -> bool {
         let Ok(c) = self.client() else { return false };

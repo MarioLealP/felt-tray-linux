@@ -16,8 +16,11 @@ Replaces the Windows Python `felt-tray` (gone with Windows, 2026-10-14). Plan + 
 - **D-Bus API** (`bus.rs`): `org.clockmost.Felt` at `/org/clockmost/Felt` - `ShowChat()` + `Status` ("checking" /
   "online" / "offline"). clockmost-shell's Felt chip uses it; `tray_icon = false` then hides the tray icon. Another
   shell: set `tray_icon = true` and nothing else changes.
-- **Not yet**: push-to-talk (needs the GlobalShortcuts portal spike S3), notices/pop-ups, the overlay, desktop
-  watchers.
+- **Her alert lines** (`notices`, `notify`): polls felt-core every 5 s, pops what it says pops as desktop
+  notifications (urgent = critical, sticky = stays), actions Details (opens the chat at `#systems/<id>`) and
+  Handled. Position in `$XDG_DATA_HOME/felt-tray/notices.json`; after a restart at most 5 missed lines pop.
+- **Not yet**: push-to-talk (needs the GlobalShortcuts portal spike S3), the raw-ntfy fallback when felt-core is
+  down, the overlay, desktop watchers.
 
 Config: `$XDG_CONFIG_HOME/felt-tray/config.toml` (see `config.example.toml`), or `FELT_TRAY_CONFIG`.
-Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window`. Checks: `just check`.
+Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window` · `notices` · `notify`. Checks: `just check`.
