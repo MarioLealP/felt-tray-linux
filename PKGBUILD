@@ -3,8 +3,8 @@
 # Builds from $startdir (the pkgs/ CI checks out the tagged commit and runs makepkg in place).
 
 pkgname=felt-tray
-pkgver=0.1.0
-pkgrel=2
+pkgver=0.2.0
+pkgrel=1
 pkgdesc="Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, screen reactions (KDE), tray icon / D-Bus API"
 arch=('x86_64')
 url="https://git.clockmost.com/pkgs/${pkgname}"
