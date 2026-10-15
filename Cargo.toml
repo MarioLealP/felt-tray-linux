@@ -1,0 +1,25 @@
+[package]
+name = "felt-tray"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+anyhow = "1.0.104"
+ksni = "0.3.6"
+png = "0.18.1"
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "http2", "json"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+tao = "0.37.1"
+tokio = { version = "1.53.3", features = ["rt-multi-thread", "macros", "sync", "time", "process", "io-util"] }
+toml = "1.1.8"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+wry = "0.57.0"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
