@@ -1,0 +1,20 @@
+pkgbase = felt-tray
+	pkgdesc = Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, tray icon / D-Bus API
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://git.clockmost.com/pkgs/felt-tray
+	arch = x86_64
+	license = LicenseRef-clockmost-private
+	makedepends = rust
+	makedepends = cargo
+	makedepends = mold
+	depends = gcc-libs
+	depends = glibc
+	depends = webkit2gtk-4.1
+	depends = gtk3
+	depends = pipewire
+	depends = xdg-utils
+	options = !lto
+	options = !debug
+
+pkgname = felt-tray

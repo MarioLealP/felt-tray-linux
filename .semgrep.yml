@@ -1,0 +1,60 @@
+# Custom semgrep rules — run alongside p/rust, p/secrets, p/security-audit.
+# These target "is this crate/PR doing something a desktop utility has no business
+# doing". Suppress a genuine hit inline with `// nosemgrep: <rule-id>  <why>`.
+
+rules:
+  - id: clockmost-shell-out
+    languages: [rust]
+    severity: ERROR
+    message: >
+      Spawning an external process. Legit for a launcher/switcher, but review
+      every occurrence — arg injection, unexpected binaries, curl|sh.
+    patterns:
+      - pattern-either:
+          - pattern: std::process::Command::new(...)
+          - pattern: Command::new(...)
+          - pattern: $X.command(...)
+
+  - id: clockmost-network-egress
+    languages: [rust]
+    severity: ERROR
+    message: >
+      Outbound network from a package that should be offline. If this is real,
+      justify it in the PR and nosemgrep it.
+    patterns:
+      - pattern-either:
+          - pattern: reqwest::$X(...)
+          - pattern: std::net::TcpStream::connect(...)
+          - pattern: std::net::UdpSocket::bind(...)
+          - pattern: ureq::$X(...)
+          - pattern: hyper::$X(...)
+          # NB: dropped `$C.get($URL)` — it matched every HashMap/Vec/Option
+          # `.get()` in the tree (dozens of false positives). If an HTTP-client
+          # `.get(url)` pattern is wanted, bind it to the client type, not `$C`.
+
+  - id: clockmost-home-dotfile-write
+    languages: [rust]
+    severity: ERROR
+    message: >
+      Writing into a dotfile / shell rc / ssh dir — classic persistence.
+    patterns:
+      - pattern-regex: '"\.(bashrc|zshrc|profile|bash_profile|ssh/authorized_keys|config/autostart)'
+
+  - id: clockmost-suspicious-decode-exec
+    languages: [rust]
+    severity: ERROR
+    message: base64/hex decode feeding straight into process spawn or eval.
+    patterns:
+      - pattern-either:
+          - pattern: |
+              let $B = base64::decode(...);
+              ...
+              Command::new($B)
+          - pattern: general_purpose::STANDARD.decode(...)
+
+  - id: clockmost-env-exfil
+    languages: [rust]
+    severity: WARNING
+    message: Reading many env vars then serialising/sending them.
+    patterns:
+      - pattern: std::env::vars()

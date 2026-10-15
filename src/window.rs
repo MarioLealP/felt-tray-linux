@@ -126,6 +126,7 @@ fn allowed(url: &str, hosts: &[String]) -> bool {
 /// Always false: the window itself doesn't go there.
 fn open_outside(url: &str) -> bool {
     if url.starts_with("https://") || url.starts_with("http://") {
+        // nosemgrep: clockmost-shell-out  fixed binary, one argv element (an http(s) URL), no shell
         let _ = std::process::Command::new("xdg-open").arg(url).spawn();
     }
     false

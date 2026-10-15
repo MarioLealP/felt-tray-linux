@@ -1,0 +1,17 @@
+# Per-package workflow: only pkgname + deps live here; the gates are in pkgs/packaging's rust-pkg.yml.
+name: build
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  pkg:
+    uses: pkgs/packaging/.gitea/workflows/rust-pkg.yml@main
+    with:
+      pkgname: felt-tray
+      # makepkg runs without sudo in CI: runtime + build libs must be preinstalled here
+      extra_pacman_deps: "webkit2gtk-4.1 gtk3 libsoup3 pipewire"
+    secrets:
+      PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}

@@ -67,6 +67,7 @@ async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>) {
 }
 
 async fn start(wav: Vec<u8>) -> Option<Child> {
+    // nosemgrep: clockmost-shell-out  fixed binary, fixed args; the WAV goes in on stdin
     let mut child = Command::new("pw-play")
         .args(["--media-role", "Communication", "-"])
         .stdin(Stdio::piped())

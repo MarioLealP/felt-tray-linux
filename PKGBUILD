@@ -1,0 +1,41 @@
+# Maintainer: Benylin <lealmariop@gmail.com>
+#
+# Builds from $startdir (the pkgs/ CI checks out the tagged commit and runs makepkg in place).
+
+pkgname=felt-tray
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, tray icon / D-Bus API"
+arch=('x86_64')
+url="https://git.clockmost.com/pkgs/${pkgname}"
+license=('LicenseRef-clockmost-private')
+depends=(
+  'gcc-libs' 'glibc'
+  'webkit2gtk-4.1' 'gtk3'  # the chat window (wry)
+  'pipewire'               # pw-play: her voice
+  'xdg-utils'              # xdg-open: links out of the chat window
+)
+makedepends=('rust' 'cargo' 'mold')
+options=('!lto' '!debug')
+
+prepare() {
+  cd "$startdir"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$startdir"
+  export RUSTFLAGS="-C link-arg=-fuse-ld=mold ${RUSTFLAGS:-}"
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release
+}
+
+package() {
+  cd "$startdir"
+  install -Dm755 target/release/felt-tray "$pkgdir/usr/bin/felt-tray"
+  install -Dm644 install/felt-tray.service "$pkgdir/usr/lib/systemd/user/felt-tray.service"
+  install -Dm644 install/config.clockmost.toml "$pkgdir/usr/share/felt-tray/config.clockmost.toml"
+  install -Dm644 install/setup.d/40-felt-tray.sh "$pkgdir/usr/share/clockmost-desktop/setup.d/40-felt-tray.sh"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm644 config.example.toml "$pkgdir/usr/share/doc/$pkgname/config.example.toml"
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommitsDisabled"],
+  "timezone": "Europe/Lisbon",
+  "schedule": ["* 4-7 * * 0"],
+  "minimumReleaseAge": "7 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "internalChecksFilter": "strict",
+  "labels": ["renovate"],
+  "lockFileMaintenance": { "enabled": true, "schedule": ["* 4-7 * * 0"] },
+  "rangeStrategy": "bump",
+  "automerge": false,
+  "packageRules": [
+    {
+      "description": "third-party code — every bump is a reviewed PR; the CI supply-chain gates (cargo-deny / cargo-vet / semgrep) run on it before it can merge",
+      "matchManagers": ["cargo"],
+      "automerge": false,
+      "dependencyDashboardApproval": false
+    }
+  ]
+}
