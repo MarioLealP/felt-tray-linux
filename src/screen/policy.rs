@@ -95,8 +95,8 @@ pub fn block_reason(w: &WindowInfo, bl: &Blocklist) -> Option<&'static str> {
     None
 }
 
-/// Exact titles of Felt's own windows (the chat window).
-const FELT_TITLES: [&str; 1] = ["Felt"];
+/// Exact titles of Felt's own windows: the chat window and her Godot overlay windows.
+const FELT_TITLES: [&str; 3] = ["Felt", "Felt Overlay", "Felt Overlay (DEBUG)"];
 
 /// Felt never captures herself: our own process, or one of her window titles (exact match only).
 pub fn exclusion_reason(w: &WindowInfo, own_pid: u32) -> Option<&'static str> {
