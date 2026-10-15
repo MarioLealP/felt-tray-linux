@@ -230,6 +230,21 @@ impl FeltCore {
         Ok(())
     }
 
+    /// The next `days` of her calendar, as felt-core shapes it for the desktop (a JSON array).
+    pub async fn calendar_upcoming(&self, days: u32) -> Result<serde_json::Value> {
+        let r = self
+            .client()?
+            .get(format!("{}/v1/calendar/upcoming?days={days}", self.base))
+            .timeout(Duration::from_secs(30))
+            .send()
+            .await?
+            .error_for_status()?;
+        let v: serde_json::Value = r.json().await?;
+        Ok(v.get("events")
+            .cloned()
+            .unwrap_or_else(|| serde_json::json!([])))
+    }
+
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.
     pub async fn ping(&self) -> bool {
         let Ok(c) = self.client() else { return false };

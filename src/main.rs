@@ -98,8 +98,14 @@ fn main() -> Result<()> {
     } else {
         (None, None)
     };
+    let agenda: bus::SharedAgenda = Arc::new(std::sync::Mutex::new("[]".into()));
     let bus_conn = rt
-        .block_on(bus::serve(proxy.clone(), status.clone(), windows_tx))
+        .block_on(bus::serve(
+            proxy.clone(),
+            status.clone(),
+            agenda.clone(),
+            windows_tx,
+        ))
         .context("can't claim org.clockmost.Felt on the session bus (already running?)")?;
     let tray = if cfg.tray_icon {
         Some(
@@ -121,6 +127,18 @@ fn main() -> Result<()> {
         }
     });
 
+    if cfg.agenda_days > 0 {
+        let (core, days) = (core.clone(), cfg.agenda_days);
+        rt.spawn(async move {
+            loop {
+                match core.calendar_upcoming(days).await {
+                    Ok(v) => *agenda.lock().expect("agenda lock") = v.to_string(),
+                    Err(e) => tracing::debug!("agenda: {e:#}"),
+                }
+                tokio::time::sleep(Duration::from_secs(300)).await;
+            }
+        });
+    }
     let switches = Arc::new(controls::Switches::default());
     rt.spawn(controls::run(core.clone(), switches.clone(), chat.player()));
     let notifier = rt.block_on(notify::Notifier::connect());

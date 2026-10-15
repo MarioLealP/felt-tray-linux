@@ -49,8 +49,9 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   (KWin ScreenShot2, granted by `org.clockmost.felt-tray.desktop`), drops near-duplicates (dHash), and sends it to
   felt-core; she speaks the reaction. Skipped after 10 min idle. The decision log line never contains a rejected
   window's title. The `Windows` D-Bus method only accepts calls from KWin itself.
-- **D-Bus API** (`org.clockmost.Felt` at `/org/clockmost/Felt`): `ShowChat()` and a `Status` property
-  ("checking" / "online" / "offline"). With `tray_icon = false` a shell's own button uses it instead of the icon
+- **D-Bus API** (`org.clockmost.Felt` at `/org/clockmost/Felt`): `ShowChat()`, a `Status` property
+  ("checking" / "online" / "offline") and an `Agenda` property: the next `agenda_days` of her calendar as JSON
+  (felt-core `/v1/calendar/upcoming`, refreshed every 5 min) for a shell's calendar - she reminds, it only shows. With `tray_icon = false` a shell's own button uses it instead of the icon
   (clockmost-shell's Felt chip does).
 - **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down, her body (the
   overlay), the music/proactive watchers. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).

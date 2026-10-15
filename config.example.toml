@@ -29,6 +29,10 @@ tray_icon = true
 # is down.
 # proactive = true
 
+# Days of her calendar offered to a desktop shell's calendar (D-Bus property `Agenda`, JSON); 0 = off.
+# Felt reminds you herself - the shell only shows.
+# agenda_days = 14
+
 # Chat window size in logical pixels.
 # window_size = [800, 600]
 

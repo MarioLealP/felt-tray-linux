@@ -33,6 +33,9 @@ pub struct Config {
     /// Plays her voice: a command that reads one WAV on stdin.
     #[serde(default = "default_player")]
     pub player: Vec<String>,
+    /// Days of her calendar to offer the shell (D-Bus `Agenda`); 0 = off.
+    #[serde(default = "default_agenda_days")]
+    pub agenda_days: u32,
     /// Her own lines (felt-core's proactive channel), spoken.
     #[serde(default = "default_true")]
     pub proactive: bool,
@@ -45,6 +48,10 @@ pub struct Config {
     /// While you stay on one window, look again this often (seconds).
     #[serde(default = "default_sample")]
     pub screen_sample_s: u64,
+}
+
+fn default_agenda_days() -> u32 {
+    14
 }
 
 fn default_sample() -> u64 {

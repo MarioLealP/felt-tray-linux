@@ -1,7 +1,7 @@
 //! A small session-bus API so a desktop shell can be Felt's face without being Felt: `org.clockmost.Felt` at
-//! `/org/clockmost/Felt` - `ShowChat()` and a `Status` property ("checking" / "online" / "offline"), plus `Windows(json)` for
-//! our own KWin script (screen reactions; KWin-only caller). The bar's
-//! Felt chip uses it; with no such shell, the tray icon does the same job.
+//! `/org/clockmost/Felt` - `ShowChat()`, a `Status` property ("checking" / "online" / "offline"), an `Agenda`
+//! property (JSON) for the shell's calendar, and `Windows(json)` for our own KWin script (screen reactions;
+//! KWin-only caller). The bar's Felt chip uses it; with no such shell, the tray icon does the same job.
 
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
@@ -32,9 +32,13 @@ impl SharedStatus {
     }
 }
 
+/// The agenda JSON (an array of events) the bar's calendar shows; "[]" until the first fetch.
+pub type SharedAgenda = Arc<Mutex<String>>;
+
 struct FeltBus {
     proxy: Mutex<EventLoopProxy<UiEvent>>,
     status: Arc<SharedStatus>,
+    agenda: SharedAgenda,
     /// Window snapshots from our KWin script (screen reactions); None = off.
     windows: Option<watch::Sender<Snapshot>>,
 }
@@ -74,6 +78,12 @@ impl FeltBus {
         Ok(())
     }
 
+    /// Upcoming events (JSON array: title, calendar, start, end, all_day, location, link), refreshed every 5 min.
+    #[zbus(property)]
+    fn agenda(&self) -> String {
+        self.agenda.lock().expect("agenda lock").clone()
+    }
+
     #[zbus(property)]
     fn status(&self) -> String {
         self.status.text().into()
@@ -83,11 +93,13 @@ impl FeltBus {
 pub async fn serve(
     proxy: EventLoopProxy<UiEvent>,
     status: Arc<SharedStatus>,
+    agenda: SharedAgenda,
     windows: Option<watch::Sender<Snapshot>>,
 ) -> zbus::Result<zbus::Connection> {
     let bus = FeltBus {
         proxy: Mutex::new(proxy),
         status,
+        agenda,
         windows,
     };
     connection::Builder::session()?
