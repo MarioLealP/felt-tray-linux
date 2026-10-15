@@ -162,6 +162,10 @@ fn main() -> Result<()> {
         Err(e) => tracing::warn!("no desktop notifications, her alerts won't pop up: {e}"),
     }
 
+    // KWin: keeps her overlay windows above; feeds screen reactions when they're on. Harmless elsewhere.
+    if let Err(e) = rt.block_on(screen::kwin::load_script(&bus_conn)) {
+        tracing::info!("no KWin script (not on KDE?): {e:#}");
+    }
     if let Some(rx) = windows_rx {
         let screen = screen::Screen {
             core: core.clone(),

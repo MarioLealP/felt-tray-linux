@@ -41,9 +41,6 @@ pub struct Screen {
 
 impl Screen {
     pub async fn run(self, mut windows: watch::Receiver<Snapshot>) {
-        if let Err(e) = kwin::load_script(&self.conn).await {
-            return tracing::warn!("screen reactions off: {e:#}");
-        }
         tracing::info!("screen reactions on (KWin), sample every {:?}", self.sample);
         let mut last_active = String::new();
         let mut settle: Option<Instant> = None;
