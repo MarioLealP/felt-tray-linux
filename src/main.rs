@@ -81,13 +81,15 @@ fn main() -> Result<()> {
     event_loop.run(move |event, target, flow| {
         *flow = ControlFlow::Wait;
         match event {
-            Event::UserEvent(UiEvent::ShowChat) => match &win {
-                Some(w) => w.window.set_focus(),
-                None => match ChatWindow::open(target, &mut ctx, &setup) {
+            Event::UserEvent(UiEvent::ShowChat) => {
+                // ksni can't take the bar's xdg-activation token, so an existing window can't raise
+                // itself on Wayland; a fresh window always maps in front (the app reloads its history).
+                win = None;
+                match ChatWindow::open(target, &mut ctx, &setup) {
                     Ok(w) => win = Some(w),
                     Err(e) => tracing::error!("can't open the chat window: {e:#}"),
-                },
-            },
+                }
+            }
             Event::UserEvent(UiEvent::Resolve { id, error }) => {
                 if let Some(w) = &win {
                     w.resolve(id, error.as_deref());

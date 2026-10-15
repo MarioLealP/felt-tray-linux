@@ -18,7 +18,8 @@ use crate::UiEvent;
 use crate::chat::Chat;
 
 pub struct ChatWindow {
-    pub window: Window,
+    // owned so the window lives as long as the web view in it
+    _window: Window,
     webview: WebView,
 }
 
@@ -94,7 +95,10 @@ impl ChatWindow {
                 }
             })
             .build_gtk(window.default_vbox().context("no GTK box in the window")?)?;
-        Ok(Self { window, webview })
+        Ok(Self {
+            _window: window,
+            webview,
+        })
     }
 
     pub fn resolve(&self, id: u64, error: Option<&str>) {
