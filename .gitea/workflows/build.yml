@@ -12,6 +12,6 @@ jobs:
     with:
       pkgname: felt-tray
       # makepkg runs without sudo in CI: runtime + build libs must be preinstalled here
-      extra_pacman_deps: "webkit2gtk-4.1 gtk3 libsoup3 pipewire"
+      extra_pacman_deps: "webkit2gtk-4.1 gtk3 libsoup3 xdg-utils"
     secrets:
       PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
