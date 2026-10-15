@@ -43,6 +43,7 @@ fn main() -> Result<()> {
                 .unwrap_or_else(|_| "felt_tray=info".into()),
         )
         .init();
+    // nosemgrep: rust.lang.security.args.args  a CLI flag (--init), not a security decision
     if std::env::args().nth(1).as_deref() == Some("--init") {
         let p = config::init()?;
         println!(
