@@ -25,6 +25,10 @@ tray_icon = true
 # Her alert lines as desktop notifications (with Details / Handled buttons).
 # notices = true
 
+# Her own lines (calendar heads-ups, alarms, things she noticed), spoken; shown as a notification when her voice
+# is down.
+# proactive = true
+
 # Chat window size in logical pixels.
 # window_size = [800, 600]
 

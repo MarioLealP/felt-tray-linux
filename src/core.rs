@@ -174,6 +174,31 @@ impl FeltCore {
         }))
     }
 
+    /// WP-25 long-poll: the next proactive item, or None when nothing came within the window.
+    pub async fn proactive_next(&self) -> Result<Option<crate::proactive::Item>> {
+        const WAIT: u64 = 25;
+        let r = self
+            .client()?
+            .get(format!("{}/v1/proactive/next?timeout={WAIT}", self.base))
+            .timeout(Duration::from_secs(WAIT + 10))
+            .send()
+            .await?;
+        if r.status() == StatusCode::NO_CONTENT {
+            return Ok(None);
+        }
+        Ok(Some(r.error_for_status()?.json().await?))
+    }
+
+    pub async fn proactive_audio(&self, id: u64) -> Result<Vec<u8>> {
+        let r = self
+            .client()?
+            .get(format!("{}/v1/proactive/{id}/audio", self.base))
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(r.bytes().await?.to_vec())
+    }
+
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.
     pub async fn ping(&self) -> bool {
         let Ok(c) = self.client() else { return false };

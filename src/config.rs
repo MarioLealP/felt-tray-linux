@@ -33,6 +33,9 @@ pub struct Config {
     /// Plays her voice: a command that reads one WAV on stdin.
     #[serde(default = "default_player")]
     pub player: Vec<String>,
+    /// Her own lines (felt-core's proactive channel), spoken.
+    #[serde(default = "default_true")]
+    pub proactive: bool,
     /// React to what's on screen (KDE Plasma/KWin only). Off unless asked for.
     #[serde(default)]
     pub screen_reactions: bool,

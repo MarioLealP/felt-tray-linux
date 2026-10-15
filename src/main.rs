@@ -9,6 +9,7 @@ mod config;
 mod core;
 mod notices;
 mod notify;
+mod proactive;
 mod screen;
 mod tray;
 mod window;
@@ -119,7 +120,12 @@ fn main() -> Result<()> {
         }
     });
 
-    match rt.block_on(notify::Notifier::connect()) {
+    let notifier = rt.block_on(notify::Notifier::connect());
+    if cfg.proactive {
+        let n = notifier.as_ref().ok().map(|(n, _)| n.clone());
+        rt.spawn(proactive::run(core.clone(), chat.player(), n));
+    }
+    match notifier {
         Ok(_) if !cfg.notices => {}
         Ok(n) => notices::start(
             core.clone(),
