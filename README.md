@@ -35,11 +35,18 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
 - **Her alert lines** (`notices = true`): felt-core decides what pops, sounds and stays; actions Details (chat at
   `#systems/<id>`) and Handled. Position in `$XDG_DATA_HOME/felt-tray/notices.json`; after a restart at most 5
   missed lines pop.
+- **Screen reactions** (`screen_reactions = true`, KDE Plasma only): our KWin script reports the visible windows
+  (app id, title) on every change; on a focus change (3 s settle) and every `screen_sample_s` she picks a target
+  over that LIST with the blocklist (`capture_blocklist.toml`, example in `/usr/share/doc/felt-tray/`) - blocked or
+  unidentified windows are never captured, a missing blocklist means no captures - then captures only that window
+  (KWin ScreenShot2, granted by `org.clockmost.felt-tray.desktop`), drops near-duplicates (dHash), and sends it to
+  felt-core; she speaks the reaction. Skipped after 10 min idle. The decision log line never contains a rejected
+  window's title. The `Windows` D-Bus method only accepts calls from KWin itself.
 - **D-Bus API** (`org.clockmost.Felt` at `/org/clockmost/Felt`): `ShowChat()` and a `Status` property
   ("checking" / "online" / "offline"). With `tray_icon = false` a shell's own button uses it instead of the icon
   (clockmost-shell's Felt chip does).
 - **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down, her body (the
-  overlay), desktop watchers. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
+  overlay), the music/proactive watchers. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
 
-Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window` · `notices` · `notify`.
+Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`).
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).

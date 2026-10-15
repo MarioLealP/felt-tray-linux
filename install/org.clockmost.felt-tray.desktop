@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Felt
+Comment=Felt's tray; grants KWin's per-window screenshots for her screen reactions (KDE)
+Exec=/usr/bin/felt-tray
+NoDisplay=true
+X-KDE-DBUS-Restricted-Interfaces=org.kde.KWin.ScreenShot2

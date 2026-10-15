@@ -1,14 +1,18 @@
 //! A small session-bus API so a desktop shell can be Felt's face without being Felt: `org.clockmost.Felt` at
-//! `/org/clockmost/Felt` - `ShowChat()` and a `Status` property ("checking" / "online" / "offline"). The bar's
+//! `/org/clockmost/Felt` - `ShowChat()` and a `Status` property ("checking" / "online" / "offline"), plus `Windows(json)` for
+//! our own KWin script (screen reactions; KWin-only caller). The bar's
 //! Felt chip uses it; with no such shell, the tray icon does the same job.
 
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 
 use tao::event_loop::EventLoopProxy;
+use tokio::sync::watch;
+use zbus::message::Header;
 use zbus::{connection, interface};
 
 use crate::UiEvent;
+use crate::screen::kwin::Snapshot;
 
 /// 0 = checking, 1 = online, 2 = offline.
 #[derive(Default)]
@@ -31,6 +35,8 @@ impl SharedStatus {
 struct FeltBus {
     proxy: Mutex<EventLoopProxy<UiEvent>>,
     status: Arc<SharedStatus>,
+    /// Window snapshots from our KWin script (screen reactions); None = off.
+    windows: Option<watch::Sender<Snapshot>>,
 }
 
 #[interface(name = "org.clockmost.Felt")]
@@ -43,6 +49,31 @@ impl FeltBus {
             .send_event(UiEvent::ShowChat);
     }
 
+    /// Called by our KWin script only: anyone else is refused (they could steer what gets captured).
+    async fn windows(
+        &self,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+        json: String,
+    ) -> zbus::fdo::Result<()> {
+        let Some(tx) = &self.windows else {
+            return Ok(());
+        };
+        let kwin = zbus::fdo::DBusProxy::new(conn)
+            .await?
+            .get_name_owner("org.kde.KWin".try_into().expect("valid name"))
+            .await?;
+        if hdr.sender().map(|s| s.as_str()) != Some(kwin.as_str()) {
+            return Err(zbus::fdo::Error::AccessDenied(
+                "only KWin may report windows".into(),
+            ));
+        }
+        let snap: Snapshot = serde_json::from_str(&json)
+            .map_err(|e| zbus::fdo::Error::InvalidArgs(e.to_string()))?;
+        tx.send_replace(snap);
+        Ok(())
+    }
+
     #[zbus(property)]
     fn status(&self) -> String {
         self.status.text().into()
@@ -52,10 +83,12 @@ impl FeltBus {
 pub async fn serve(
     proxy: EventLoopProxy<UiEvent>,
     status: Arc<SharedStatus>,
+    windows: Option<watch::Sender<Snapshot>>,
 ) -> zbus::Result<zbus::Connection> {
     let bus = FeltBus {
         proxy: Mutex::new(proxy),
         status,
+        windows,
     };
     connection::Builder::session()?
         .name("org.clockmost.Felt")?

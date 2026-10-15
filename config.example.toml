@@ -30,3 +30,10 @@ tray_icon = true
 
 # Plays her voice: a command that reads one WAV file on stdin (PipeWire's pw-play by default).
 # player = ["pw-play", "--media-role", "Communication", "-"]
+
+# React to what's on screen (KDE Plasma only: KWin's window list + per-window screenshots). Before anything
+# is captured, the active window is checked against the blocklist; blocked or unidentified windows are never
+# captured, and a missing/unreadable blocklist means no captures at all.
+# screen_reactions = false
+# capture_blocklist = "~/.config/felt-tray/capture_blocklist.toml"   (default: next to this file)
+# screen_sample_s = 45

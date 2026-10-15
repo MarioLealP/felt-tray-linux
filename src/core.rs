@@ -135,6 +135,45 @@ impl FeltCore {
         Ok(r.status().is_success())
     }
 
+    /// A captured window (already cleared by the capture policy) -> her reaction, or None on 503 (nothing
+    /// this time).
+    pub async fn react_screen(
+        &self,
+        jpeg: Vec<u8>,
+        app: &str,
+        title: &str,
+        trigger: &str,
+        session_id: &str,
+    ) -> Result<Option<Reply>> {
+        let image = reqwest::multipart::Part::bytes(jpeg)
+            .file_name("screen.jpg")
+            .mime_str("image/jpeg")?;
+        let form = reqwest::multipart::Form::new()
+            .part("image", image)
+            .text("app", app.to_owned())
+            .text("title", title.to_owned())
+            .text("trigger", trigger.to_owned());
+        let r = self
+            .client()?
+            .post(format!(
+                "{}/v1/react/screen?session_id={session_id}",
+                self.base
+            ))
+            .multipart(form)
+            .send()
+            .await?;
+        if r.status() == StatusCode::SERVICE_UNAVAILABLE {
+            return Ok(None);
+        }
+        let r = r.error_for_status()?;
+        let text = header(r.headers(), "X-Reply-Text").unwrap_or_default();
+        Ok(Some(Reply {
+            text,
+            stream: None,
+            audio: r.bytes().await?.to_vec(),
+        }))
+    }
+
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.
     pub async fn ping(&self) -> bool {
         let Ok(c) = self.client() else { return false };

@@ -26,6 +26,11 @@ impl Chat {
         })
     }
 
+    /// Her voice, shared with the screen reactions (one queue, one speaker).
+    pub fn player(&self) -> Player {
+        self.player.clone()
+    }
+
     /// Returns once her first sentence is ready (the app then refetches the conversation); the rest of a
     /// long reply keeps playing in the background.
     pub async fn send(self: &Arc<Self>, message: &str) -> Result<()> {

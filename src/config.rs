@@ -33,6 +33,28 @@ pub struct Config {
     /// Plays her voice: a command that reads one WAV on stdin.
     #[serde(default = "default_player")]
     pub player: Vec<String>,
+    /// React to what's on screen (KDE Plasma/KWin only). Off unless asked for.
+    #[serde(default)]
+    pub screen_reactions: bool,
+    /// The privacy blocklist for screen reactions; missing or unreadable = nothing is captured.
+    #[serde(default)]
+    pub capture_blocklist: Option<PathBuf>,
+    /// While you stay on one window, look again this often (seconds).
+    #[serde(default = "default_sample")]
+    pub screen_sample_s: u64,
+}
+
+fn default_sample() -> u64 {
+    45
+}
+
+impl Config {
+    pub fn blocklist_path(&self) -> Result<PathBuf> {
+        match &self.capture_blocklist {
+            Some(p) => Ok(p.clone()),
+            None => Ok(path()?.with_file_name("capture_blocklist.toml")),
+        }
+    }
 }
 
 fn default_window_size() -> [f64; 2] {

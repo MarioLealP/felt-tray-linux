@@ -1,4 +1,74 @@
 
 # cargo-vet audits file
 
-[audits]
+[[audits.bytemuck]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "1.25.2"
+notes = "Zero-copy casting (Lokathor); unsafe is the documented Pod/Zeroable casts + SIMD types; no build.rs, no process/net/fs."
+
+[[audits.byteorder-lite]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.0"
+notes = "image-rs byte-order readers; 4 unsafe, no build.rs/process/net/fs."
+
+[[audits.image]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.25.10"
+notes = "image-rs; fs writes only in save() APIs (unused by felt-tray), env! only CARGO_MANIFEST_DIR in tests; no build.rs/process/net."
+
+[[audits.mime]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.3.17"
+notes = "hyperium MIME types; no unsafe, no build.rs/process/net/fs."
+
+[[audits.mime_guess]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "2.0.5"
+notes = "build.rs writes the generated MIME table to OUT_DIR only; src include!s it; no process/net."
+
+[[audits.moxcms]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.8.1"
+notes = "awxkee colour management (pulled by image); unsafe = SIMD paths; no build.rs/process/net/fs."
+
+[[audits.num-traits]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.2.19"
+notes = "rust-num; build.rs = autocfg compiler probe only; no process/net/fs."
+
+[[audits.pxfm]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.30"
+notes = "awxkee float math (pulled by moxcms); unsafe = internal math helpers; no build.rs/process/net/fs."
+
+[[audits.regex]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "1.13.1"
+notes = "rust-lang/regex; 1 unsafe; no build.rs/process/net/fs."
+
+[[audits.unicase]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "2.10.0"
+notes = "seanmonstar case-insensitive strings; no unsafe, no build.rs/process/net/fs."
+
+[[audits.zune-core]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.5.3"
+notes = "zune-image core types; small unsafe; no build.rs/process/net/fs."
+
+[[audits.zune-jpeg]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.5.15"
+notes = "zune-image JPEG decoder; unsafe = AVX2/NEON IDCT paths; no build.rs/process/net/fs."

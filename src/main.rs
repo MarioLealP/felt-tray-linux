@@ -9,6 +9,7 @@ mod config;
 mod core;
 mod notices;
 mod notify;
+mod screen;
 mod tray;
 mod window;
 
@@ -89,8 +90,14 @@ fn main() -> Result<()> {
     let event_loop = EventLoopBuilder::<UiEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
     let status = Arc::new(bus::SharedStatus::default());
-    let _bus = rt
-        .block_on(bus::serve(proxy.clone(), status.clone()))
+    let (windows_tx, windows_rx) = if cfg.screen_reactions {
+        let (tx, rx) = tokio::sync::watch::channel(screen::kwin::Snapshot::default());
+        (Some(tx), Some(rx))
+    } else {
+        (None, None)
+    };
+    let bus_conn = rt
+        .block_on(bus::serve(proxy.clone(), status.clone(), windows_tx))
         .context("can't claim org.clockmost.Felt on the session bus (already running?)")?;
     let tray = if cfg.tray_icon {
         Some(
@@ -121,6 +128,18 @@ fn main() -> Result<()> {
             config::data_dir()?.join("notices.json"),
         ),
         Err(e) => tracing::warn!("no desktop notifications, her alerts won't pop up: {e}"),
+    }
+
+    if let Some(rx) = windows_rx {
+        let screen = screen::Screen {
+            core: core.clone(),
+            player: chat.player(),
+            conn: bus_conn.clone(),
+            blocklist: cfg.blocklist_path()?,
+            sample: Duration::from_secs(cfg.screen_sample_s.max(10)),
+            session_id: cfg.session_id.clone(),
+        };
+        rt.spawn(screen.run(rx));
     }
 
     let setup = WindowSetup {
@@ -161,6 +180,8 @@ fn main() -> Result<()> {
             } => win = None,
             Event::UserEvent(UiEvent::Quit) => {
                 win = None;
+                let c = bus_conn.clone();
+                rt.block_on(async move { screen::kwin::unload_script(&c).await.ok() });
                 if let Some(t) = tray.clone() {
                     rt.block_on(async move { t.shutdown().await });
                 }

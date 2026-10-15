@@ -1,5 +1,5 @@
 pkgbase = felt-tray
-	pkgdesc = Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, tray icon / D-Bus API
+	pkgdesc = Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, screen reactions (KDE), tray icon / D-Bus API
 	pkgver = 0.1.0
 	pkgrel = 2
 	url = https://git.clockmost.com/pkgs/felt-tray

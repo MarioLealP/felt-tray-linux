@@ -195,6 +195,12 @@ criteria = "safe-to-deploy"
 delta = "0.2.0 -> 0.2.1"
 notes = "Minor update, nothing major"
 
+[[audits.bytecodealliance.audits.num-traits]]
+who = "Andrew Brown <andrew.brown@intel.com>"
+criteria = "safe-to-deploy"
+version = "0.2.19"
+notes = "As advertised: a numeric library. The only `unsafe` is from some float-to-int conversions, which seems expected."
+
 [[audits.bytecodealliance.audits.parking]]
 who = "Chris Fallin <chris@cfallin.org>"
 criteria = "safe-to-deploy"

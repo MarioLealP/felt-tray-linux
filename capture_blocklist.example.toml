@@ -1,0 +1,25 @@
+# Example screen-capture blocklist for felt-tray (copy to ~/.config/felt-tray/capture_blocklist.toml). From the
+# clockmost desktop's policy (2026-10-15). Checked BEFORE any pixels are taken, against KWin's window list.
+# Matched case-insensitively against the window's app id (resourceClass) and its desktop file name.
+# A window with no app id is always blocked (fail closed). Browsers are allowed (Mario 2026-09-30: "Since she
+# is fully local, we can loosen the privacy filter") - except bank pages and private windows (title rules).
+
+apps = [
+    # Discord, every client (equibop is the one on this desktop)
+    "discord", "discord-ptb", "discord-canary", "com.discordapp.Discord",
+    "equibop", "vesktop", "dev.vencord.Vesktop", "legcord", "armcord", "webcord",
+    # messaging / phone
+    "whatsapp", "whatsapp-for-linux", "wasistlos", "zapzap", "com.rtosta.zapzap",
+    "telegram-desktop", "org.telegram.desktop", "telegramdesktop",
+    "signal", "signal-desktop", "org.signal.Signal",
+    "org.kde.kdeconnect.app", "org.kde.kdeconnect.sms", "kdeconnect.sms",
+    # secrets
+    "keepassxc", "org.keepassxc.KeePassXC", "org.kde.kwalletmanager", "kwalletmanager5",
+    # privacy browsers
+    "mullvadbrowser", "mullvad-browser", "torbrowser", "tor-browser",
+]
+
+title_regexes = [
+    "(?i)\\b(bank|banco|caixa|millennium|revolut|paypal|mbway)\\b",
+    "(?i)(inprivate|incognito|private browsing|navega[cç][aã]o privada|\\(private\\)|- private -|\\bprivate window\\b|tor browser)",
+]

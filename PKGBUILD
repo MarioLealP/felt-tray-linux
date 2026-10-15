@@ -5,7 +5,7 @@
 pkgname=felt-tray
 pkgver=0.1.0
 pkgrel=2
-pkgdesc="Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, tray icon / D-Bus API"
+pkgdesc="Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, screen reactions (KDE), tray icon / D-Bus API"
 arch=('x86_64')
 url="https://git.clockmost.com/pkgs/${pkgname}"
 license=('LicenseRef-clockmost-private')
@@ -38,4 +38,7 @@ package() {
   install -Dm644 install/felt-tray.service "$pkgdir/usr/lib/systemd/user/felt-tray.service"
   install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
   install -Dm644 config.example.toml "$pkgdir/usr/share/doc/$pkgname/config.example.toml"
+  install -Dm644 capture_blocklist.example.toml "$pkgdir/usr/share/doc/$pkgname/capture_blocklist.example.toml"
+  # KDE: lets KWin grant /usr/bin/felt-tray per-window screenshots (screen reactions); inert elsewhere
+  install -Dm644 install/org.clockmost.felt-tray.desktop "$pkgdir/usr/share/applications/org.clockmost.felt-tray.desktop"
 }
