@@ -3,3 +3,6 @@ felt_core_url = "https://felt-api.clockmost.com"
 app_url = "https://felt.clockmost.com/app/"
 client_bundle = "/var/lib/clockmost/service-identities/tray/client/bundle.pem"
 window_hosts = ["felt.clockmost.com", "auth.clockmost.com"]
+
+# true = tray icon; false when the desktop shell has its own Felt button (it calls org.clockmost.Felt)
+tray_icon = true

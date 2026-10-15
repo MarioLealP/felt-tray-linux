@@ -21,6 +21,13 @@ pub struct Config {
     /// felt-core session id for typed lines (the app's own session, so her marks land there too).
     #[serde(default = "default_session")]
     pub session_id: String,
+    /// Show the tray icon. Off when the desktop shell has its own Felt button (it calls the D-Bus API instead).
+    #[serde(default = "default_true")]
+    pub tray_icon: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 fn default_session() -> String {
@@ -80,6 +87,7 @@ mod tests {
         .unwrap();
         assert_eq!(c.felt_core_url, "https://core.test");
         assert_eq!(c.session_id, "dashboard");
+        assert!(c.tray_icon);
     }
 
     #[test]

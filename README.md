@@ -13,8 +13,11 @@ Replaces the Windows Python `felt-tray` (gone with Windows, 2026-10-14). Plan + 
   default browser. SSO cookie kept in `$XDG_DATA_HOME/felt-tray/webview`.
 - **Voice out**: WAV clips through `pw-play` (PipeWire), streamed replies (WP-54) queued; a new line stops the
   old reply.
+- **D-Bus API** (`bus.rs`): `org.clockmost.Felt` at `/org/clockmost/Felt` - `ShowChat()` + `Status` ("checking" /
+  "online" / "offline"). clockmost-shell's Felt chip uses it; `tray_icon = false` then hides the tray icon. Another
+  shell: set `tray_icon = true` and nothing else changes.
 - **Not yet**: push-to-talk (needs the GlobalShortcuts portal spike S3), notices/pop-ups, the overlay, desktop
   watchers.
 
 Config: `$XDG_CONFIG_HOME/felt-tray/config.toml` (see `config.example.toml`), or `FELT_TRAY_CONFIG`.
-Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `window`. Checks: `just check`.
+Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window`. Checks: `just check`.

@@ -1,8 +1,9 @@
-//! felt-tray: Felt on the Linux desktop - a tray icon, the chat window (the hosted Felt app), and her voice
-//! for typed replies. Voice input, the overlay and the desktop watchers come later
+//! felt-tray: Felt on the Linux desktop - a tray icon (optional; a shell's Felt button can use the D-Bus API
+//! instead), the chat window (the hosted Felt app), and her voice for typed replies. Voice input, the overlay and the desktop watchers come later
 //! (`runbooks/felt-desktop-rust-port.md`).
 
 mod audio;
+mod bus;
 mod chat;
 mod config;
 mod core;
@@ -50,19 +51,25 @@ fn main() -> Result<()> {
 
     let event_loop = EventLoopBuilder::<UiEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
-    let tray = rt
-        .block_on(tray::FeltTray::new(proxy.clone()).spawn())
-        .context("can't put the tray icon up (no StatusNotifier host?)")?;
+    let status = Arc::new(bus::SharedStatus::default());
+    let _bus = rt
+        .block_on(bus::serve(proxy.clone(), status.clone()))
+        .context("can't claim org.clockmost.Felt on the session bus (already running?)")?;
+    let tray = if cfg.tray_icon {
+        Some(
+            rt.block_on(tray::FeltTray::new(proxy.clone()).spawn())
+                .context("can't put the tray icon up (no StatusNotifier host?)")?,
+        )
+    } else {
+        None
+    };
     let status_tray = tray.clone();
     rt.spawn(async move {
         loop {
             let online = core.ping().await;
-            if status_tray
-                .update(|t| t.online = Some(online))
-                .await
-                .is_none()
-            {
-                break; // tray gone
+            status.set(online);
+            if let Some(t) = &status_tray {
+                t.update(|t| t.online = Some(online)).await;
             }
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
@@ -101,8 +108,9 @@ fn main() -> Result<()> {
             } => win = None,
             Event::UserEvent(UiEvent::Quit) => {
                 win = None;
-                let t = tray.clone();
-                rt.block_on(async move { t.shutdown().await });
+                if let Some(t) = tray.clone() {
+                    rt.block_on(async move { t.shutdown().await });
+                }
                 *flow = ControlFlow::Exit;
             }
             _ => {}
