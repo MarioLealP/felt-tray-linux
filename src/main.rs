@@ -6,6 +6,7 @@ mod audio;
 mod bus;
 mod chat;
 mod config;
+mod controls;
 mod core;
 mod notices;
 mod notify;
@@ -120,10 +121,17 @@ fn main() -> Result<()> {
         }
     });
 
+    let switches = Arc::new(controls::Switches::default());
+    rt.spawn(controls::run(core.clone(), switches.clone(), chat.player()));
     let notifier = rt.block_on(notify::Notifier::connect());
     if cfg.proactive {
         let n = notifier.as_ref().ok().map(|(n, _)| n.clone());
-        rt.spawn(proactive::run(core.clone(), chat.player(), n));
+        rt.spawn(proactive::run(
+            core.clone(),
+            chat.player(),
+            n,
+            switches.clone(),
+        ));
     }
     match notifier {
         Ok(_) if !cfg.notices => {}
@@ -144,6 +152,7 @@ fn main() -> Result<()> {
             blocklist: cfg.blocklist_path()?,
             sample: Duration::from_secs(cfg.screen_sample_s.max(10)),
             session_id: cfg.session_id.clone(),
+            switches: switches.clone(),
         };
         rt.spawn(screen.run(rx));
     }

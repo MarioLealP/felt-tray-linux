@@ -199,6 +199,37 @@ impl FeltCore {
         Ok(r.bytes().await?.to_vec())
     }
 
+    pub async fn proactive_requeue(&self, id: u64) -> Result<()> {
+        self.client()?
+            .post(format!("{}/v1/proactive/{id}/requeue", self.base))
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn controls(&self) -> Result<crate::controls::State> {
+        let r = self
+            .client()?
+            .get(format!("{}/v1/controls", self.base))
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(r.json().await?)
+    }
+
+    pub async fn report_desktop(&self, report: &serde_json::Value) -> Result<()> {
+        self.client()?
+            .post(format!("{}/v1/controls/desktop", self.base))
+            .json(report)
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(())
+    }
+
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.
     pub async fn ping(&self) -> bool {
         let Ok(c) = self.client() else { return false };

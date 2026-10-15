@@ -38,6 +38,10 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
 - **Her own lines** (`proactive = true`): long-polls felt-core's proactive channel (WP-25: calendar heads-ups,
   alarms, things she noticed) and speaks them; when her voice can't be fetched the line pops up as a
   notification instead of being re-queued forever.
+- **Hide / quiet switches** (WP-42.5, from the Felt app anywhere): polled every 5 s from felt-core. Quiet cuts
+  her off mid-sentence and stops everything unprompted (screen reactions, her own lines - urgent ones still come
+  through; items go back to felt-core); hide does the same until there's a body to hide. Heartbeat every 15 s to
+  `/v1/controls/desktop` so the app shows the PC as on.
 - **Screen reactions** (`screen_reactions = true`, KDE Plasma only): our KWin script reports the visible windows
   (app id, title) on every change; on a focus change (3 s settle) and every `screen_sample_s` she picks a target
   over that LIST with the blocklist (`capture_blocklist.toml`, example in `/usr/share/doc/felt-tray/`) - blocked or
@@ -51,5 +55,5 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
 - **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down, her body (the
   overlay), the music/proactive watchers. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
 
-Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive`.
+Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls`.
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).

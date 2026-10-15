@@ -17,6 +17,7 @@ use tokio::sync::watch;
 use tokio::time::{Instant, sleep_until};
 
 use crate::audio::Player;
+use crate::controls::Switches;
 use crate::core::FeltCore;
 use kwin::Snapshot;
 use policy::Blocklist;
@@ -35,6 +36,7 @@ pub struct Screen {
     pub blocklist: PathBuf,
     pub sample: Duration,
     pub session_id: String,
+    pub switches: Arc<Switches>,
 }
 
 impl Screen {
@@ -84,6 +86,9 @@ impl Screen {
         trigger: &str,
         seen: &mut HashMap<String, u64>,
     ) {
+        if !self.switches.unprompted_ok() {
+            return; // quiet / hidden: she does not look either
+        }
         let blocklist = match Blocklist::load(&self.blocklist) {
             Ok(b) => b,
             Err(e) => return tracing::warn!("no capture (fail closed): {e:#}"),
