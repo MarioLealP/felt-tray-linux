@@ -12,8 +12,8 @@ pkgbase = felt-tray
 	depends = glibc
 	depends = webkit2gtk-4.1
 	depends = gtk3
-	depends = pipewire
 	depends = xdg-utils
+	optdepends = pipewire: pw-play, the default player for her voice (or set `player` in the config)
 	options = !lto
 	options = !debug
 

@@ -1,8 +1,32 @@
-# felt-tray (Rust) - see ~/Drives/Storage/Felt/felt-tray-rust/config.example.toml
-felt_core_url = "https://felt-api.clockmost.com"
-app_url = "https://felt.clockmost.com/app/"
-client_bundle = "/var/lib/clockmost/service-identities/tray/client/bundle.pem"
-window_hosts = ["felt.clockmost.com", "auth.clockmost.com"]
+# felt-tray config - `felt-tray --init` writes this file to ~/.config/felt-tray/config.toml.
+# Fill in your Felt server's details; felt-tray refuses to start while a required value is empty.
 
-# true = tray icon; false when the desktop shell has its own Felt button (it calls org.clockmost.Felt)
+# felt-core's machine host: Caddy (or any TLS proxy) that requires the tray's client certificate and passes
+# its identity to felt-core. Example: "https://felt-api.example.org"
+felt_core_url = ""
+
+# The hosted Felt app the chat window opens (behind your SSO). Example: "https://felt.example.org/app/"
+app_url = ""
+
+# The tray's client certificate: ONE PEM file with key + certificate + chain, replaced in place when renewed
+# (felt-tray re-reads it when it changes). Your user must be able to read it.
+client_bundle = ""
+
+# Hosts the chat window may browse: the app's host and your SSO login host. Everything else opens in the
+# default browser. Example: ["felt.example.org", "auth.example.org"]
+window_hosts = []
+
+# true = a tray icon (any StatusNotifierItem host: Plasma, waybar, GNOME + AppIndicator...).
+# false = no icon, for a desktop shell with its own Felt button (it calls the D-Bus API org.clockmost.Felt).
 tray_icon = true
+
+# --- optional (defaults shown) ---
+
+# Her alert lines as desktop notifications (with Details / Handled buttons).
+# notices = true
+
+# Chat window size in logical pixels.
+# window_size = [800, 600]
+
+# Plays her voice: a command that reads one WAV file on stdin (PipeWire's pw-play by default).
+# player = ["pw-play", "--media-role", "Communication", "-"]

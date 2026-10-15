@@ -43,15 +43,47 @@ fn main() -> Result<()> {
                 .unwrap_or_else(|_| "felt_tray=info".into()),
         )
         .init();
-    let cfg = config::load()?;
+    if std::env::args().nth(1).as_deref() == Some("--init") {
+        let p = config::init()?;
+        println!(
+            "wrote {} - fill in your Felt server's details, then start felt-tray",
+            p.display()
+        );
+        return Ok(());
+    }
     let rt = tokio::runtime::Runtime::new()?;
     let _guard = rt.enter();
+    let cfg = match config::load()? {
+        config::Loaded::Ok(c) => *c,
+        config::Loaded::Missing(p) => {
+            let msg = format!(
+                "No config yet. Run `felt-tray --init`, then fill in {}.",
+                p.display()
+            );
+            if let Ok((n, _)) = rt.block_on(notify::Notifier::connect()) {
+                let popup = notify::Popup {
+                    summary: "Felt isn't set up",
+                    body: &msg,
+                    actions: &[],
+                    critical: false,
+                    sticky: true,
+                    sound: false,
+                };
+                let _ = rt.block_on(n.show(&popup));
+            }
+            anyhow::bail!(msg);
+        }
+    };
 
     let core = Arc::new(core::FeltCore::new(
         cfg.felt_core_url.clone(),
         cfg.client_bundle.clone(),
     ));
-    let chat = chat::Chat::new(core.clone(), audio::Player::spawn(), cfg.session_id.clone());
+    let chat = chat::Chat::new(
+        core.clone(),
+        audio::Player::spawn(cfg.player.clone()),
+        cfg.session_id.clone(),
+    );
 
     let event_loop = EventLoopBuilder::<UiEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
@@ -80,6 +112,7 @@ fn main() -> Result<()> {
     });
 
     match rt.block_on(notify::Notifier::connect()) {
+        Ok(_) if !cfg.notices => {}
         Ok(n) => notices::start(
             core.clone(),
             n,
@@ -91,6 +124,7 @@ fn main() -> Result<()> {
 
     let setup = WindowSetup {
         app_url: cfg.app_url.parse().context("app_url is not a URL")?,
+        size: cfg.window_size,
         hosts: Arc::new(cfg.window_hosts),
         chat,
         rt: rt.handle().clone(),

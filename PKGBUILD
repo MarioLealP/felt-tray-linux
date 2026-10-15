@@ -12,8 +12,10 @@ license=('LicenseRef-clockmost-private')
 depends=(
   'gcc-libs' 'glibc'
   'webkit2gtk-4.1' 'gtk3'  # the chat window (wry)
-  'pipewire'               # pw-play: her voice
   'xdg-utils'              # xdg-open: links out of the chat window
+)
+optdepends=(
+  'pipewire: pw-play, the default player for her voice (or set `player` in the config)'
 )
 makedepends=('rust' 'cargo' 'mold')
 options=('!lto' '!debug')
@@ -34,8 +36,6 @@ package() {
   cd "$startdir"
   install -Dm755 target/release/felt-tray "$pkgdir/usr/bin/felt-tray"
   install -Dm644 install/felt-tray.service "$pkgdir/usr/lib/systemd/user/felt-tray.service"
-  install -Dm644 install/config.clockmost.toml "$pkgdir/usr/share/felt-tray/config.clockmost.toml"
-  install -Dm644 install/setup.d/40-felt-tray.sh "$pkgdir/usr/share/clockmost-desktop/setup.d/40-felt-tray.sh"
   install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
   install -Dm644 config.example.toml "$pkgdir/usr/share/doc/$pkgname/config.example.toml"
 }

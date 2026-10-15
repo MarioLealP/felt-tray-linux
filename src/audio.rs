@@ -1,4 +1,5 @@
-//! Her voice: WAV clips played one after another through PipeWire (`pw-play -`, stdin). A new reply calls
+//! Her voice: WAV clips played one after another by the configured player (default PipeWire's `pw-play -`,
+//! WAV on stdin). A new reply calls
 //! [`Player::stop`] first, which kills the clip that's playing and drops the queue.
 
 use std::collections::VecDeque;
@@ -20,9 +21,9 @@ pub struct Player {
 
 impl Player {
     /// Starts the player task; needs a tokio runtime.
-    pub fn spawn() -> Self {
+    pub fn spawn(command: Vec<String>) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        tokio::spawn(run(rx));
+        tokio::spawn(run(rx, command));
         Self { tx }
     }
 
@@ -37,14 +38,14 @@ impl Player {
     }
 }
 
-async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>) {
+async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>, command: Vec<String>) {
     let mut queue: VecDeque<Vec<u8>> = VecDeque::new();
     let mut current: Option<Child> = None;
     loop {
         if current.is_none()
             && let Some(wav) = queue.pop_front()
         {
-            current = start(wav).await;
+            current = start(&command, wav).await;
         }
         let cmd = match current.as_mut() {
             Some(child) => tokio::select! {
@@ -66,15 +67,16 @@ async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>) {
     }
 }
 
-async fn start(wav: Vec<u8>) -> Option<Child> {
-    // nosemgrep: clockmost-shell-out  fixed binary, fixed args; the WAV goes in on stdin
-    let mut child = Command::new("pw-play")
-        .args(["--media-role", "Communication", "-"])
+async fn start(command: &[String], wav: Vec<u8>) -> Option<Child> {
+    let (program, args) = command.split_first()?;
+    // nosemgrep: clockmost-shell-out  the user's configured player (no shell); the WAV goes in on stdin
+    let mut child = Command::new(program)
+        .args(args)
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .kill_on_drop(true)
         .spawn()
-        .inspect_err(|e| tracing::warn!("can't start pw-play: {e}"))
+        .inspect_err(|e| tracing::warn!("can't start the player {program}: {e}"))
         .ok()?;
     let mut stdin = child.stdin.take()?;
     // Fed from its own task so a long clip never blocks Stop.

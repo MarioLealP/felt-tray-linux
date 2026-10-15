@@ -3,7 +3,7 @@ Description=Felt tray: her chat window, voice for typed replies, alert pop-ups
 Documentation=file:///usr/share/doc/felt-tray/README.md
 PartOf=graphical-session.target
 After=graphical-session.target plasma-plasmashell.service
-# the session must be in group tray-certs (reads the vault renewer's client cert)
+# your user must be able to read client_bundle (see config.toml)
 
 [Service]
 ExecStart=/usr/bin/felt-tray

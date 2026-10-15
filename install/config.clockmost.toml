@@ -1,7 +1,0 @@
-# felt-tray on the clockmost desktop (copied to ~/.config/felt-tray/config.toml by clockmost-desktop-setup if missing)
-felt_core_url = "https://felt-api.clockmost.com"
-app_url = "https://felt.clockmost.com/app/"
-client_bundle = "/var/lib/clockmost/service-identities/tray/client/bundle.pem"
-window_hosts = ["felt.clockmost.com", "auth.clockmost.com"]
-# clockmost-shell's bar has the Felt chip (it calls org.clockmost.Felt); another shell: set true
-tray_icon = false

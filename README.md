@@ -1,26 +1,45 @@
-# felt-tray (Rust, Linux)
+# felt-tray
 
-Felt on the Linux desktop: a tray icon (StatusNotifierItem - works under any panel/shell), the chat window
-(the hosted Felt app in a web view, created on open and destroyed on close), and her voice for typed replies.
-Replaces the Windows Python `felt-tray` (gone with Windows, 2026-10-14). Plan + decisions:
-`~/workspace/runbooks/felt-desktop-rust-port.md`.
+Felt on a Linux desktop: the chat window (your Felt server's hosted app in a web view, created on open and destroyed
+on close), her voice for typed replies, her alert lines as desktop notifications, and a tray icon - or, for a
+desktop shell with its own Felt button, a D-Bus API instead. Works under any desktop with a StatusNotifierItem host
+(Plasma, waybar, GNOME + AppIndicator, ...). Part of clockmost: it talks to a clockmost Felt server (`felt-core`).
 
-- **Identity**: felt-core's machine host (`felt-api`) with the tray's 2-hour Felt client cert - the vault renewer
-  (`clockmost-renewer@tray.timer`, system) writes `bundle.pem`; we re-read it when it changes. The user running
-  the tray must be in `tray-certs`. No tokens.
-- **Chat window**: `window.feltTray.text_chat(message)` is defined on the app's origin only (wry init script +
-  IPC, origin-checked again on the Rust side); the window only browses `window_hosts`, other links open in the
-  default browser. SSO cookie kept in `$XDG_DATA_HOME/felt-tray/webview`.
-- **Voice out**: WAV clips through `pw-play` (PipeWire), streamed replies (WP-54) queued; a new line stops the
-  old reply.
-- **D-Bus API** (`bus.rs`): `org.clockmost.Felt` at `/org/clockmost/Felt` - `ShowChat()` + `Status` ("checking" /
-  "online" / "offline"). clockmost-shell's Felt chip uses it; `tray_icon = false` then hides the tray icon. Another
-  shell: set `tray_icon = true` and nothing else changes.
-- **Her alert lines** (`notices`, `notify`): polls felt-core every 5 s, pops what it says pops as desktop
-  notifications (urgent = critical, sticky = stays), actions Details (opens the chat at `#systems/<id>`) and
-  Handled. Position in `$XDG_DATA_HOME/felt-tray/notices.json`; after a restart at most 5 missed lines pop.
-- **Not yet**: push-to-talk (needs the GlobalShortcuts portal spike S3), the raw-ntfy fallback when felt-core is
-  down, the overlay, desktop watchers.
+## Set up
 
-Config: `$XDG_CONFIG_HOME/felt-tray/config.toml` (see `config.example.toml`), or `FELT_TRAY_CONFIG`.
-Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window` · `notices` · `notify`. Checks: `just check`.
+1. `pacman -S felt-tray` (the `[clockmost]` repo).
+2. `felt-tray --init` writes `~/.config/felt-tray/config.toml` (commented; also in `/usr/share/doc/felt-tray/`).
+   Fill in your Felt server's machine host, app URL, SSO host and the client-certificate file. felt-tray refuses to
+   start while a required value is empty, and says which.
+3. `systemctl --user enable --now felt-tray` (starts with your graphical session).
+
+On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-desktop-setup`).
+
+## What it needs from the Felt server
+
+- **Machine host** (`felt_core_url`): a TLS proxy that requires the tray's client certificate and hands its
+  identity to felt-core (clockmost: Caddy's `felt-api` host, WP-62 M2b). No tokens anywhere.
+- **Client certificate** (`client_bundle`): one PEM file, key + certificate + chain, replaced in place when renewed
+  - felt-tray re-reads it when it changes. clockmost: the vault renewer (`clockmost-renewer@tray.timer`) writes it;
+  your user must be in its `tray-certs` group.
+- **The hosted Felt app** (`app_url`) behind your SSO; the chat window remembers the login in
+  `$XDG_DATA_HOME/felt-tray/webview`.
+
+## Pieces
+
+- **Chat window**: `window.feltTray.text_chat(message)` is defined on the app's origin only (init script + IPC,
+  origin-checked again on the Rust side); the window only browses `window_hosts`, other links open in the default
+  browser. A click always opens it fresh in front (no Wayland activation token through ksni).
+- **Her voice**: WAV clips through the configured `player` (default `pw-play`, PipeWire); long replies stream
+  sentence by sentence (WP-54); a new line stops the old reply. Voice down on the server = text only.
+- **Her alert lines** (`notices = true`): felt-core decides what pops, sounds and stays; actions Details (chat at
+  `#systems/<id>`) and Handled. Position in `$XDG_DATA_HOME/felt-tray/notices.json`; after a restart at most 5
+  missed lines pop.
+- **D-Bus API** (`org.clockmost.Felt` at `/org/clockmost/Felt`): `ShowChat()` and a `Status` property
+  ("checking" / "online" / "offline"). With `tray_icon = false` a shell's own button uses it instead of the icon
+  (clockmost-shell's Felt chip does).
+- **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down, her body (the
+  overlay), desktop watchers. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
+
+Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window` · `notices` · `notify`.
+Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).

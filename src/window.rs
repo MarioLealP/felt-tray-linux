@@ -26,6 +26,7 @@ pub struct ChatWindow {
 /// What stays the same across window openings.
 pub struct WindowSetup {
     pub app_url: Url,
+    pub size: [f64; 2],
     pub hosts: Arc<Vec<String>>,
     pub chat: Arc<Chat>,
     pub rt: tokio::runtime::Handle,
@@ -48,7 +49,7 @@ impl ChatWindow {
     ) -> Result<Self> {
         let window = WindowBuilder::new()
             .with_title("Felt")
-            .with_inner_size(LogicalSize::new(800.0, 600.0))
+            .with_inner_size(LogicalSize::new(s.size[0], s.size[1]))
             .build(target)?;
         let origin = s.app_url.origin().ascii_serialization();
         let (chat, rt, proxy, ipc_origin) = (
