@@ -19,13 +19,14 @@ pub fn geometry(ctx: &Ctx) -> OverlayGeometry {
 }
 
 /// Walks to world `x` looping `cycle_tag` (walk or run) until main.gd says she arrived; stands up first.
-pub async fn walk_to(ctx: &Ctx, x: f64, cycle_tag: &str) {
+/// `offscreen`: past the visible frame (hiding).
+pub async fn walk_to(ctx: &Ctx, x: f64, cycle_tag: &str, offscreen: bool) {
     stand_up_if_sitting(ctx).await;
     ctx.current_x.set(x);
     let looped = ctx.assets.tags.contains(cycle_tag).then_some(cycle_tag);
     let running = cycle_tag == RUN_TAG;
     ctx.behavior
-        .walk_to(x, looped, running, None, None, false, CLIP_TIMEOUT_S)
+        .walk_to(x, looped, running, None, None, offscreen, CLIP_TIMEOUT_S)
         .await;
 }
 

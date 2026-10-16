@@ -821,6 +821,7 @@ dependencies = [
  "felt-geometry",
  "felt-library",
  "felt-mood",
+ "felt-presence",
  "felt-state",
  "futures-util",
  "getrandom 0.4.3",

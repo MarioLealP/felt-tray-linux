@@ -13,6 +13,7 @@ mod lipsync;
 mod mood;
 mod moves;
 mod overlay;
+mod presence;
 mod reply;
 mod speech;
 
@@ -46,6 +47,8 @@ enum Msg {
     },
     /// A later sentence of the same reply (streamed).
     More { text: String, audio: Vec<u8> },
+    /// The Felt app's hide switch.
+    Hidden(bool),
 }
 
 /// felt-tray's side of her body. Cheap to clone; every call returns at once.
@@ -76,6 +79,11 @@ impl Handle {
             emotion,
             prompted,
         });
+    }
+
+    /// The hide switch: she walks off screen (true) or comes back (false).
+    pub fn set_hidden(&self, hidden: bool) {
+        let _ = self.tx.send(Msg::Hidden(hidden));
     }
 
     pub fn more(&self, text: &str, audio: Vec<u8>) {
@@ -153,6 +161,9 @@ async fn run(
         mood: RefCell::new(mood::load(&mood_path)),
         events,
         current_x: Cell::new(0.0),
+        presence: RefCell::new(presence::Presence::new(clock::monotonic_s as fn() -> f64)),
+        presence_walk: RefCell::new(None),
+        exit_left: Cell::new(true),
     });
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
     tokio::task::spawn_local(ambient::idle_refresh(ctx.clone()));
@@ -176,6 +187,12 @@ async fn run(
                 emotion,
                 prompted,
             } => {
+                if !presence::visible(&ctx) {
+                    if !prompted {
+                        continue; // you sent her away: nothing unprompted
+                    }
+                    presence::show(&ctx); // a line you sent brings her back
+                }
                 let generation = ctx.next_generation();
                 ctx.bubble.replace(text.clone());
                 let reaction = Some(reply::begin(&ctx, &text, tag, emotion, prompted));
@@ -186,6 +203,8 @@ async fn run(
                     reaction,
                 });
             }
+            Msg::Hidden(true) => presence::hide(&ctx),
+            Msg::Hidden(false) => presence::show(&ctx),
             Msg::More { text, audio } => {
                 let generation = ctx.generation.get();
                 let _ = sentences.send(Sentence {

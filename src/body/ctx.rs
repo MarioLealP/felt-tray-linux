@@ -11,6 +11,7 @@ use super::assets::Assets;
 use super::events::Events;
 use super::mood::Mood;
 use super::overlay::{Overlay, Rig};
+use super::presence::Presence;
 use crate::audio::Player;
 use crate::core::FeltCore;
 
@@ -40,6 +41,11 @@ pub struct Ctx {
     pub events: Events,
     /// Where she is (world x) as far as we know: set when she's sent somewhere.
     pub current_x: Cell<f64>,
+    pub presence: RefCell<Presence>,
+    /// The hide/show walk in flight (a newer one aborts it).
+    pub presence_walk: RefCell<Option<tokio::task::JoinHandle<()>>>,
+    /// Which edge she left through (true = screen left), so she comes back the same way.
+    pub exit_left: Cell<bool>,
 }
 
 impl Ctx {

@@ -42,6 +42,18 @@ impl Voice {
         }
     }
 
+    /// The Felt app's hide switch, for her body.
+    pub fn set_hidden(&self, hidden: bool) {
+        if let Some(b) = &self.body {
+            b.set_hidden(hidden);
+        }
+    }
+
+    /// Is there a body to hide?
+    pub fn has_body(&self) -> bool {
+        self.body.is_some()
+    }
+
     /// A later sentence of the same reply.
     pub fn more(&self, audio: Vec<u8>) {
         match &self.body {

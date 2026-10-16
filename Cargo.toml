@@ -29,6 +29,7 @@ felt-gaze = { path = "crates/gaze" }
 felt-geometry = { path = "crates/geometry" }
 felt-library = { path = "crates/library" }
 felt-mood = { path = "crates/mood" }
+felt-presence = { path = "crates/presence" }
 felt-state = { path = "crates/state" }
 
 anyhow = "1.0.104"

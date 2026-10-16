@@ -12,6 +12,7 @@ use rand::seq::IndexedRandom;
 use super::clock;
 use super::ctx::{CLIP_TIMEOUT_S, Ctx};
 use super::moves::{self, RUN_TAG, SITTING_IDLE, WALK_TAG};
+use super::presence;
 
 /// How far from a monitor's middle an ambient walk goes (world m), and how often it crosses monitors.
 const ROAM_REACH_M: f64 = 2.0;
@@ -20,7 +21,7 @@ const CROSS_MONITOR_CHANCE: f64 = 0.3;
 pub async fn idle_refresh(ctx: Rc<Ctx>) {
     loop {
         sleep_between(10.0, 18.0).await;
-        if ctx.behavior.busy() {
+        if ctx.behavior.busy() || !presence::visible(&ctx) {
             continue;
         }
         let tag = if ctx.behavior.sitting() {
@@ -37,7 +38,7 @@ pub async fn idle_refresh(ctx: Rc<Ctx>) {
 pub async fn run(ctx: Rc<Ctx>) {
     loop {
         sleep_between(20.0, 45.0).await;
-        if ctx.behavior.busy() {
+        if ctx.behavior.busy() || !presence::visible(&ctx) {
             continue;
         }
         let hour = clock::local().hour();
@@ -68,7 +69,7 @@ async fn standing(ctx: &Ctx, action: &str) {
         "walk" if ctx.assets.tags.contains(WALK_TAG) => {
             let run = ctx.assets.tags.contains(RUN_TAG) && rand::rng().random_bool(0.3);
             let x = wander_target(ctx);
-            moves::walk_to(ctx, x, if run { RUN_TAG } else { WALK_TAG }).await;
+            moves::walk_to(ctx, x, if run { RUN_TAG } else { WALK_TAG }, false).await;
         }
         "sit_down" => {
             moves::sit_down(ctx).await;

@@ -154,11 +154,7 @@ fn main() -> Result<()> {
         });
     }
     let switches = Arc::new(controls::Switches::default());
-    rt.spawn(controls::run(
-        core.clone(),
-        switches.clone(),
-        voice.player(),
-    ));
+    rt.spawn(controls::run(core.clone(), switches.clone(), voice.clone()));
     let notifier = rt.block_on(notify::Notifier::connect());
     if cfg.proactive {
         let n = notifier.as_ref().ok().map(|(n, _)| n.clone());

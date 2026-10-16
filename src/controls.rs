@@ -1,6 +1,6 @@
 //! Her hide / quiet switches (WP-42.5), set from the Felt app anywhere (they live in felt-core). Polled every
 //! 5 s. Quiet: she stops mid-sentence and says nothing on her own (screen reactions, her own lines) - an
-//! answer you asked for still speaks. Hide (no body on Linux yet): nothing unprompted either. Urgent lines
+//! answer you asked for still speaks. Hide: her body walks off screen, and nothing unprompted either. Urgent lines
 //! (calendar heads-up) always get through. A heartbeat every 15 s tells felt-core the PC side is alive.
 
 use std::sync::Arc;
@@ -10,8 +10,8 @@ use std::time::Duration;
 use serde::Deserialize;
 use serde_json::json;
 
-use crate::audio::Player;
 use crate::core::FeltCore;
+use crate::voice::Voice;
 
 const POLL: Duration = Duration::from_secs(5);
 const HEARTBEAT_EVERY: u32 = 3; // polls
@@ -43,16 +43,19 @@ pub struct Switch {
     pub on: bool,
 }
 
-pub async fn run(core: Arc<FeltCore>, switches: Arc<Switches>, player: Player) {
+pub async fn run(core: Arc<FeltCore>, switches: Arc<Switches>, voice: Voice) {
     let mut applied: Option<u64> = None;
     let mut tick = 0u32;
     loop {
         match core.controls().await {
             Ok(s) => {
                 let was_quiet = switches.quiet.swap(s.quiet.on, Ordering::Relaxed);
-                switches.hidden.store(s.hide.on, Ordering::Relaxed);
+                let was_hidden = switches.hidden.swap(s.hide.on, Ordering::Relaxed);
                 if s.quiet.on && !was_quiet {
-                    player.stop(); // cut off mid-sentence
+                    voice.player().stop(); // cut off mid-sentence
+                }
+                if s.hide.on != was_hidden || applied.is_none() {
+                    voice.set_hidden(s.hide.on);
                 }
                 if applied != Some(s.version) {
                     tracing::info!(
@@ -68,7 +71,7 @@ pub async fn run(core: Arc<FeltCore>, switches: Arc<Switches>, player: Player) {
         }
         if tick.is_multiple_of(HEARTBEAT_EVERY) {
             let report = json!({
-                "animation": false, // no felt-animation on Linux yet
+                "animation": voice.has_body(),
                 "applied": applied,
                 "presence": if switches.hidden.load(Ordering::Relaxed) { "hidden" } else { "visible" },
                 "hushed": switches.quiet.load(Ordering::Relaxed),
