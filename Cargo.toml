@@ -26,6 +26,7 @@ publish.workspace = true
 # her body's logic (crates/)
 felt-afk = { path = "crates/afk" }
 felt-beat = { path = "crates/beat" }
+felt-face-life = { path = "crates/face-life" }
 felt-faces = { path = "crates/faces" }
 felt-games = { path = "crates/games" }
 felt-gaze = { path = "crates/gaze" }

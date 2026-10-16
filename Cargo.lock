@@ -818,6 +818,7 @@ dependencies = [
  "anyhow",
  "felt-afk",
  "felt-beat",
+ "felt-face-life",
  "felt-faces",
  "felt-games",
  "felt-gaze",

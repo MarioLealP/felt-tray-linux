@@ -8,9 +8,11 @@ mod assets;
 mod clock;
 mod ctx;
 mod events;
+mod face;
 mod gaze;
 mod hush;
 mod ledge;
+mod lines;
 mod lipsync;
 mod mood;
 mod moves;
@@ -200,6 +202,8 @@ async fn run(
         tempo_locked: Cell::new(false),
         world: RefCell::new(world::World::default()),
         outfits,
+        face_held_until: Cell::new(Instant::now()),
+        filler: RefCell::new(None),
         tees: cfg.tees.clone(),
         wardrobe_path,
         cursor: Cell::new(None),
@@ -208,6 +212,7 @@ async fn run(
     });
     tokio::task::spawn_local(overlay_events(ctx.clone()));
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
+    tokio::task::spawn_local(face::micro_expressions(ctx.clone()));
     tokio::task::spawn_local(ambient::idle_refresh(ctx.clone()));
     tokio::task::spawn_local(ambient::run(ctx.clone()));
     tokio::task::spawn_local(gaze::run(ctx.clone(), cursor));
@@ -225,6 +230,7 @@ async fn run(
                 ctx.overlay.lipsync(&[]).await; // a cut-off reply's mouth eases closed
                 ctx.behavior
                     .begin_thinking(ctx.assets.thinking_tag(), CLIP_TIMEOUT_S);
+                lines::arm_filler(&ctx);
             }
             Msg::Reply {
                 text,

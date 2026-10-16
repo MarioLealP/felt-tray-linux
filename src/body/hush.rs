@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use serde_json::json;
 
 use super::ctx::Ctx;
-use super::{presence, react, speech};
+use super::{lines, presence, react, speech};
 
 /// How long to wait for her to be back on screen before the un-hush line.
 const BACK_WAIT: Duration = Duration::from_secs(30);
@@ -29,7 +29,7 @@ pub async fn set(ctx: &Rc<Ctx>, quiet: bool) {
     ctx.overlay.lipsync(&[]).await; // her mouth eases closed with the cut-off sentence
     ctx.mood.borrow_mut().on_hush();
     ctx.events.report("hush", json!({}));
-    if let Some(wav) = presence_line(ctx, "zip_it") {
+    if let Some(wav) = lines::presence_line(ctx, "zip_it") {
         ctx.player.play(wav);
     }
 }
@@ -58,18 +58,9 @@ async fn announce_unhush(ctx: Rc<Ctx>, hushed_for_s: u64) {
             if let Err(e) = other {
                 tracing::info!("hush: no un-hush line from felt-core ({e:#})");
             }
-            if let Some(wav) = presence_line(&ctx, "unhush") {
+            if let Some(wav) = lines::presence_line(&ctx, "unhush") {
                 ctx.player.play(wav);
             }
         }
     }
-}
-
-/// A random take of one of her recorded presence lines (`<sounds>/presence/<line>_N.wav`).
-fn presence_line(ctx: &Ctx, line: &str) -> Option<Vec<u8>> {
-    let dir = ctx.sounds.as_deref()?;
-    let path = felt_sounds::pick_presence_path(line, dir, None)?;
-    std::fs::read(&path)
-        .inspect_err(|e| tracing::warn!("can't read {}: {e}", path.display()))
-        .ok()
 }

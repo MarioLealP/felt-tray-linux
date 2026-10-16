@@ -57,6 +57,10 @@ pub struct Ctx {
     /// The cursor's desktop position, as gaze last saw it.
     pub cursor: Cell<Option<(f64, f64)>>,
     pub outfits: super::outfits::Outfits,
+    /// A pose holds her face until then (micro-expressions wait).
+    pub face_held_until: Cell<Instant>,
+    /// The "hmm" filler a slow reply gets, while armed.
+    pub filler: RefCell<Option<tokio::task::JoinHandle<()>>>,
     /// Her tees folder, when configured.
     pub tees: Option<std::path::PathBuf>,
     pub wardrobe_path: std::path::PathBuf,
@@ -85,6 +89,8 @@ impl Ctx {
 
     /// A face pose held `hold` seconds.
     pub async fn apply_pose(&self, pose: &str, hold: f64) {
+        self.face_held_until
+            .set(Instant::now() + std::time::Duration::from_secs_f64(hold.max(0.0)));
         self.overlay
             .face(&self.assets.pose_regions(pose), hold)
             .await;

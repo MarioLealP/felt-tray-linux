@@ -43,6 +43,9 @@ pub fn say(
         }
         presence::show(ctx);
     }
+    if let Some(f) = ctx.filler.take() {
+        f.abort(); // the reply is here: no "hmm"
+    }
     let generation = ctx.next_generation();
     ctx.bubble.replace(text.clone());
     if let Some(e) = &emotion {
@@ -84,8 +87,9 @@ pub async fn run(ctx: Rc<Ctx>, mut rx: mpsc::UnboundedReceiver<Sentence>) {
         if !ctx.current(s.generation) {
             continue;
         }
+        let wav = s.audio.clone();
         let started = ctx.player.play_then(s.audio);
-        tokio::task::spawn_local(speak(ctx.clone(), started, cues, speaking_s, clips));
+        tokio::task::spawn_local(speak(ctx.clone(), started, cues, speaking_s, clips, wav));
     }
 }
 
@@ -95,10 +99,13 @@ async fn speak(
     cues: Vec<Value>,
     speaking_s: f64,
     clips: Option<Vec<String>>,
+    wav: Vec<u8>,
 ) {
     if started.await.is_err() {
         return; // stopped before it played
     }
+    let pose = ctx.pose.borrow().clone();
+    tokio::task::spawn_local(super::face::accents(ctx.clone(), wav, pose));
     ctx.overlay.lipsync(&cues).await;
     ctx.speaking_until
         .set(Instant::now() + Duration::from_secs_f64(speaking_s + SPEAKING_SLACK_S));
