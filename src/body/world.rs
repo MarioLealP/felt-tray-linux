@@ -1,4 +1,4 @@
-//! Her world (WP-23): the tops of your windows are ledges she can stand on. Four times a second KWin's window
+//! Her world (WP-23): the tops of your windows are ledges she can stand on. Ten times a second KWin's window
 //! list (top-most first) and the monitors' work areas become platforms - each window's top edge minus whatever
 //! covers it, one floor per monitor (felt-world) - on the monitors she has a view on. "Never floating": if the
 //! ledge under her goes (a window closed, minimised, covered or moved away) she drops to the highest platform
@@ -17,7 +17,8 @@ use super::overlay::Event;
 use super::{moves, window_events};
 use crate::screen::kwin::Snapshot;
 
-const TICK: Duration = Duration::from_millis(250);
+// KWin sends at most every 100 ms; matching it keeps riding a dragged window smooth
+const TICK: Duration = Duration::from_millis(100);
 /// Her height before the overlay reports its own numbers (her size at 100 %).
 const DEFAULT_HEIGHT_PX: f64 = 540.0;
 
