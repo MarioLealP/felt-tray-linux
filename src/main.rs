@@ -1,8 +1,9 @@
 //! felt-tray: Felt on the Linux desktop - a tray icon (optional; a shell's Felt button can use the D-Bus API
-//! instead), the chat window (the hosted Felt app), and her voice for typed replies. Voice input, the overlay and the desktop watchers come later
+//! instead), the chat window (the hosted Felt app), her voice, and her body (the Godot overlay). Voice input comes later
 //! (`runbooks/felt-desktop-rust-port.md`).
 
 mod audio;
+mod body;
 mod bus;
 mod chat;
 mod config;
@@ -178,6 +179,12 @@ fn main() -> Result<()> {
         };
         rt.spawn(screen.run(rx));
     }
+
+    // Her body: kept alive for the program's life (the overlay quits when felt-tray does).
+    let _body = cfg.body.as_ref().map(|b| {
+        let _rt = rt.enter();
+        body::start(b)
+    });
 
     let setup = WindowSetup {
         app_url: cfg.app_url.parse().context("app_url is not a URL")?,

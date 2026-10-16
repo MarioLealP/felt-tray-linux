@@ -45,3 +45,10 @@ tray_icon = true
 # screen_reactions = false
 # capture_blocklist = "~/.config/felt-tray/capture_blocklist.toml"   (default: next to this file)
 # screen_sample_s = 45
+
+# Her body: felt-tray launches the Godot overlay that draws her and drives it (walking, sitting on windows,
+# reacting). It talks to the overlay over a loopback port with a fresh secret each launch. Leave this table out
+# for no body. KDE Plasma keeps her windows above the others (felt-tray's KWin script).
+# [body]
+# command = ["godot", "--display-driver", "wayland", "--path", "/path/to/felt-godot-overlay"]
+# port = 8765

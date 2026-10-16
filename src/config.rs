@@ -48,6 +48,24 @@ pub struct Config {
     /// While you stay on one window, look again this often (seconds).
     #[serde(default = "default_sample")]
     pub screen_sample_s: u64,
+    /// Her body: the Godot overlay felt-tray launches and drives. No `[body]` table = no body.
+    #[serde(default)]
+    pub body: Option<Body>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Body {
+    /// Starts the overlay, e.g. `["godot", "--display-driver", "wayland", "--path", "/path/to/felt-godot-overlay"]`
+    /// or an exported overlay binary. The relay port and secret flag are added after `--`.
+    pub command: Vec<String>,
+    /// Loopback port the overlay's relay listens on.
+    #[serde(default = "default_body_port")]
+    pub port: u16,
+}
+
+fn default_body_port() -> u16 {
+    8765
 }
 
 fn default_agenda_days() -> u32 {
