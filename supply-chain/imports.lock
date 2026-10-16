@@ -21,6 +21,27 @@ user-id = 2396
 user-login = "jdm"
 user-name = "Josh Bowman-Matthews"
 
+[[publisher.jiff]]
+version = "0.2.37"
+when = "2026-09-12"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.jiff-core]]
+version = "0.1.1"
+when = "2026-09-12"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.jiff-static]]
+version = "0.2.37"
+when = "2026-09-12"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
 [[publisher.unicode-segmentation]]
 version = "1.13.3"
 when = "2026-06-01"

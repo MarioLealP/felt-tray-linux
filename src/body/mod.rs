@@ -4,9 +4,12 @@
 //! This file only wires the parts together.
 
 mod assets;
+mod clock;
 mod ctx;
+mod events;
 mod gaze;
 mod lipsync;
+mod mood;
 mod overlay;
 mod reply;
 mod speech;
@@ -130,6 +133,9 @@ async fn run(
     ));
     tokio::spawn(idle_on_connect(o.clone()));
     let behavior = BehaviorState::new(Rc::new(Rig(o.clone())), Rc::new(MonotonicClock::new()));
+    let state_dir = crate::config::data_dir().unwrap_or_else(|_| ".".into());
+    let mood_path = state_dir.join("mood.json");
+    let events = events::Events::start(core.clone(), state_dir.join("day_start.json"));
     let ctx = Rc::new(Ctx {
         overlay: o,
         behavior: Rc::new(behavior),
@@ -142,7 +148,10 @@ async fn run(
         bubble: RefCell::new(String::new()),
         thinking: Cell::new(false),
         speaking_until: Cell::new(Instant::now()),
+        mood: RefCell::new(mood::load(&mood_path)),
+        events,
     });
+    tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
     tokio::task::spawn_local(gaze::run(ctx.clone(), cursor));
     let (sentences, queue) = mpsc::unbounded_channel();
     tokio::task::spawn_local(speech::run(ctx.clone(), queue));

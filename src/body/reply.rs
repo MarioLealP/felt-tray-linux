@@ -15,6 +15,7 @@ const TAG_GRACE: Duration = Duration::from_secs(1);
 pub struct Pending {
     tag: tokio::task::JoinHandle<String>,
     emotion: Option<String>,
+    prompted: bool,
 }
 
 /// `prompted`: you asked for this reply (chat). Her own lines and screen reactions never ask felt-llm.
@@ -30,6 +31,7 @@ pub fn begin(
     Pending {
         tag: tokio::task::spawn_local(pick),
         emotion,
+        prompted,
     }
 }
 
@@ -66,6 +68,14 @@ impl Pending {
         ctx.pose.replace(pose.to_owned());
         ctx.apply_pose(pose, speaking_s + 1.5).await;
         tracing::info!("reaction: {tag} with a {pose} face");
+        {
+            let mut mood = ctx.mood.borrow_mut();
+            mood.tick();
+            mood.on_reaction_spoken();
+            if self.prompted {
+                mood.on_talked_to();
+            }
+        }
         clips.push(tag);
         clips
     }

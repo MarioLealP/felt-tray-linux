@@ -142,6 +142,21 @@ criteria = "safe-to-deploy"
 version = "0.1.7"
 criteria = "safe-to-deploy"
 
+[[exemptions.defmt]]
+version = "1.2.0"
+criteria = "safe-to-deploy"
+notes = "not built for felt-tray's target (jiff-core optional, embedded only)"
+
+[[exemptions.defmt-macros]]
+version = "1.2.0"
+criteria = "safe-to-deploy"
+notes = "not built for felt-tray's target (via defmt)"
+
+[[exemptions.defmt-parser]]
+version = "1.1.0"
+criteria = "safe-to-deploy"
+notes = "not built for felt-tray's target (via defmt)"
+
 [[exemptions.deranged]]
 version = "0.5.9"
 criteria = "safe-to-deploy"
@@ -649,6 +664,16 @@ criteria = "safe-to-deploy"
 [[exemptions.png]]
 version = "0.18.1"
 criteria = "safe-to-deploy"
+
+[[exemptions.portable-atomic]]
+version = "1.15.0"
+criteria = "safe-to-deploy"
+notes = "not built for felt-tray's target (jiff, targets without native atomics)"
+
+[[exemptions.portable-atomic-util]]
+version = "0.2.8"
+criteria = "safe-to-deploy"
+notes = "not built for felt-tray's target (jiff, targets without native atomics)"
 
 [[exemptions.potential_utf]]
 version = "0.1.6"

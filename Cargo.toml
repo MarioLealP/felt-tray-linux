@@ -27,6 +27,7 @@ publish.workspace = true
 felt-faces = { path = "crates/faces" }
 felt-gaze = { path = "crates/gaze" }
 felt-library = { path = "crates/library" }
+felt-mood = { path = "crates/mood" }
 felt-state = { path = "crates/state" }
 
 anyhow = "1.0.104"
@@ -46,6 +47,7 @@ tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 wry = "0.57.0"
 zbus = { version = "5.19.0", default-features = false, features = ["tokio"] }
+jiff = { version = "=0.2.37", default-features = false, features = ["std", "tz-system", "tzdb-zoneinfo"] }
 
 [lints]
 workspace = true

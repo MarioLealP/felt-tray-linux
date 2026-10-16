@@ -276,6 +276,23 @@ impl FeltCore {
             .map(str::to_owned))
     }
 
+    /// One diary event (her body's notices); 204 = taken, 404 = a felt-core without `/v1/events`.
+    pub async fn report_event(
+        &self,
+        kind: &str,
+        data: &serde_json::Value,
+        at: &str,
+    ) -> Result<StatusCode> {
+        let r = self
+            .client()?
+            .post(format!("{}/v1/events", self.base))
+            .json(&json!({ "kind": kind, "data": data, "at": at }))
+            .timeout(Duration::from_secs(5))
+            .send()
+            .await?;
+        Ok(r.status())
+    }
+
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.
     pub async fn ping(&self) -> bool {
         let Ok(c) = self.client() else { return false };

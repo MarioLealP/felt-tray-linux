@@ -8,6 +8,8 @@ use std::time::Instant;
 use felt_state::BehaviorState;
 
 use super::assets::Assets;
+use super::events::Events;
+use super::mood::Mood;
 use super::overlay::{Overlay, Rig};
 use crate::audio::Player;
 use crate::core::FeltCore;
@@ -34,6 +36,8 @@ pub struct Ctx {
     /// She's talking until then (her gaze is on you); a little past each sentence so the gaps between
     /// streamed sentences don't count as silence.
     pub speaking_until: Cell<Instant>,
+    pub mood: RefCell<Mood>,
+    pub events: Events,
 }
 
 impl Ctx {
