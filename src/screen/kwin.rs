@@ -43,22 +43,31 @@ where
 
 /// Replace any copy left by an earlier run, then load and start ours.
 pub async fn load_script(conn: &Connection) -> Result<()> {
+    load(conn, PLUGIN, SCRIPT).await
+}
+
+pub async fn unload_script(conn: &Connection) -> Result<()> {
+    unload(conn, PLUGIN).await
+}
+
+/// Loads `source` as KWin script `plugin` (replacing an earlier copy) and starts it.
+pub async fn load(conn: &Connection, plugin: &str, source: &str) -> Result<()> {
     let dir = std::env::var_os("XDG_RUNTIME_DIR").context("XDG_RUNTIME_DIR is not set")?;
-    let path = PathBuf::from(dir).join("felt-tray-kwin.js");
-    std::fs::write(&path, SCRIPT).with_context(|| format!("writing {}", path.display()))?;
-    unload_script(conn).await?;
+    let path = PathBuf::from(dir).join(format!("{plugin}.js"));
+    std::fs::write(&path, source).with_context(|| format!("writing {}", path.display()))?;
+    unload(conn, plugin).await?;
     let path = path.to_str().context("script path is not UTF-8")?;
-    let id: i32 = scripting(conn, "loadScript", &(path, PLUGIN))
+    let id: i32 = scripting(conn, "loadScript", &(path, plugin))
         .await?
         .body()
         .deserialize()?;
-    anyhow::ensure!(id >= 0, "KWin refused the script (id {id})");
+    anyhow::ensure!(id >= 0, "KWin refused the script {plugin} (id {id})");
     scripting(conn, "start", &()).await?;
     Ok(())
 }
 
-pub async fn unload_script(conn: &Connection) -> Result<()> {
-    scripting(conn, "unloadScript", &(PLUGIN,)).await?;
+pub async fn unload(conn: &Connection, plugin: &str) -> Result<()> {
+    scripting(conn, "unloadScript", &(plugin,)).await?;
     Ok(())
 }
 

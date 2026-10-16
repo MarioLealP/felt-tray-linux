@@ -25,6 +25,7 @@ publish.workspace = true
 [dependencies]
 # her body's logic (crates/)
 felt-faces = { path = "crates/faces" }
+felt-gaze = { path = "crates/gaze" }
 felt-library = { path = "crates/library" }
 felt-state = { path = "crates/state" }
 

@@ -50,6 +50,7 @@ impl Pending {
             }
         };
         ctx.behavior.end_thinking_and_wait().await;
+        ctx.thinking.set(false);
         let tags = &ctx.assets.tags;
         let (tag, stand_up) = felt_library::resolve_posture_tag(
             &raw,

@@ -5,6 +5,7 @@
 
 mod assets;
 mod ctx;
+mod gaze;
 mod lipsync;
 mod overlay;
 mod reply;
@@ -13,10 +14,11 @@ mod speech;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::sync::Arc;
+use std::time::Instant;
 
 use anyhow::{Context, Result};
 use felt_state::{BehaviorState, MonotonicClock};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, watch};
 
 use crate::audio::Player;
 use crate::config;
@@ -77,8 +79,27 @@ impl Handle {
     }
 }
 
+/// The cursor's desktop position, from our KWin cursor script.
+pub type Cursor = watch::Receiver<Option<(f64, f64)>>;
+
+const CURSOR_PLUGIN: &str = "felt-tray-cursor";
+
+/// KDE: our cursor script, so her eyes can follow the mouse.
+pub async fn load_cursor_script(conn: &zbus::Connection) -> Result<()> {
+    crate::screen::kwin::load(conn, CURSOR_PLUGIN, include_str!("cursor_script.js")).await
+}
+
+pub async fn unload_cursor_script(conn: &zbus::Connection) -> Result<()> {
+    crate::screen::kwin::unload(conn, CURSOR_PLUGIN).await
+}
+
 /// Starts her body's thread: the overlay, its link, and her reactions to what felt-tray tells it.
-pub fn start(cfg: &config::Body, core: Arc<FeltCore>, player: Player) -> Result<Handle> {
+pub fn start(
+    cfg: &config::Body,
+    core: Arc<FeltCore>,
+    player: Player,
+    cursor: Cursor,
+) -> Result<Handle> {
     let (tx, rx) = mpsc::unbounded_channel();
     let cfg = cfg.clone();
     std::thread::Builder::new()
@@ -88,7 +109,7 @@ pub fn start(cfg: &config::Body, core: Arc<FeltCore>, player: Player) -> Result<
                 .enable_all()
                 .build()
                 .expect("her body's runtime");
-            tokio::task::LocalSet::new().block_on(&rt, run(cfg, core, player, rx));
+            tokio::task::LocalSet::new().block_on(&rt, run(cfg, core, player, cursor, rx));
         })
         .context("can't start her body's thread")?;
     Ok(Handle { tx })
@@ -98,6 +119,7 @@ async fn run(
     cfg: config::Body,
     core: Arc<FeltCore>,
     player: Player,
+    cursor: Cursor,
     mut rx: mpsc::UnboundedReceiver<Msg>,
 ) {
     let o = Arc::new(Overlay::new());
@@ -118,13 +140,17 @@ async fn run(
         generation: Cell::new(0),
         pose: RefCell::new("neutral".into()),
         bubble: RefCell::new(String::new()),
+        thinking: Cell::new(false),
+        speaking_until: Cell::new(Instant::now()),
     });
+    tokio::task::spawn_local(gaze::run(ctx.clone(), cursor));
     let (sentences, queue) = mpsc::unbounded_channel();
     tokio::task::spawn_local(speech::run(ctx.clone(), queue));
     while let Some(msg) = rx.recv().await {
         match msg {
             Msg::Thinking => {
                 ctx.next_generation();
+                ctx.thinking.set(true);
                 ctx.overlay.lipsync(&[]).await; // a cut-off reply's mouth eases closed
                 ctx.behavior
                     .begin_thinking(ctx.assets.thinking_tag(), CLIP_TIMEOUT_S);

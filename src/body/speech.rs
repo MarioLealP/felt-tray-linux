@@ -3,6 +3,7 @@
 //! The first sentence of a reply also brings her reaction (gesture + face).
 
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 
 use serde_json::Value;
 use tokio::sync::{mpsc, oneshot};
@@ -10,6 +11,9 @@ use tokio::sync::{mpsc, oneshot};
 use super::ctx::{BUBBLE_MIN_S, CLIP_TIMEOUT_S, Ctx};
 use super::lipsync;
 use super::reply::Pending;
+
+/// How long past a sentence's last cue she still counts as speaking (the gap to the next streamed one).
+const SPEAKING_SLACK_S: f64 = 1.5;
 
 pub struct Sentence {
     pub generation: u64,
@@ -49,6 +53,8 @@ async fn speak(
         return; // stopped before it played
     }
     ctx.overlay.lipsync(&cues).await;
+    ctx.speaking_until
+        .set(Instant::now() + Duration::from_secs_f64(speaking_s + SPEAKING_SLACK_S));
     let bubble = ctx.bubble.borrow().clone();
     ctx.overlay
         .bubble(&bubble, BUBBLE_MIN_S.max(speaking_s + 1.5))

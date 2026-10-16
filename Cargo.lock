@@ -787,6 +787,7 @@ version = "0.4.0"
 dependencies = [
  "anyhow",
  "felt-faces",
+ "felt-gaze",
  "felt-library",
  "felt-state",
  "futures-util",

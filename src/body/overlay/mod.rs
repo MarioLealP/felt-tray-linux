@@ -83,7 +83,6 @@ impl Overlay {
         true
     }
 
-    #[cfg_attr(not(test), expect(dead_code, reason = "gaze reads it (port step 4)"))]
     pub fn current_tag(&self) -> Option<String> {
         self.seen.lock().expect("seen lock").current_tag.clone()
     }

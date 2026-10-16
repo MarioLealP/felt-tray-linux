@@ -1,7 +1,7 @@
 //! A small session-bus API so a desktop shell can be Felt's face without being Felt: `org.clockmost.Felt` at
 //! `/org/clockmost/Felt` - `ShowChat()`, a `Status` property ("checking" / "online" / "offline"), an `Agenda`
-//! property (JSON) for the shell's calendar, and `Windows(json)` for our own KWin script (screen reactions;
-//! KWin-only caller). The bar's Felt chip uses it; with no such shell, the tray icon does the same job.
+//! property (JSON) for the shell's calendar, and `Windows(json)` / `Cursor(json)` for our own KWin scripts
+//! (screen reactions, her gaze; KWin-only callers). The bar's Felt chip uses it; with no such shell, the tray icon does the same job.
 
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
@@ -41,6 +41,22 @@ struct FeltBus {
     agenda: SharedAgenda,
     /// Window snapshots from our KWin script (screen reactions); None = off.
     windows: Option<watch::Sender<Snapshot>>,
+    /// The cursor's desktop position from our KWin script (her gaze); None = no body.
+    cursor: Option<watch::Sender<Option<(f64, f64)>>>,
+}
+
+/// Only KWin itself (our scripts) may call the methods that feed screen capture and her gaze.
+async fn from_kwin(hdr: &Header<'_>, conn: &zbus::Connection) -> zbus::fdo::Result<()> {
+    let kwin = zbus::fdo::DBusProxy::new(conn)
+        .await?
+        .get_name_owner("org.kde.KWin".try_into().expect("valid name"))
+        .await?;
+    if hdr.sender().map(|s| s.as_str()) != Some(kwin.as_str()) {
+        return Err(zbus::fdo::Error::AccessDenied(
+            "only KWin may call this".into(),
+        ));
+    }
+    Ok(())
 }
 
 #[interface(name = "org.clockmost.Felt")]
@@ -63,18 +79,27 @@ impl FeltBus {
         let Some(tx) = &self.windows else {
             return Ok(());
         };
-        let kwin = zbus::fdo::DBusProxy::new(conn)
-            .await?
-            .get_name_owner("org.kde.KWin".try_into().expect("valid name"))
-            .await?;
-        if hdr.sender().map(|s| s.as_str()) != Some(kwin.as_str()) {
-            return Err(zbus::fdo::Error::AccessDenied(
-                "only KWin may report windows".into(),
-            ));
-        }
+        from_kwin(&hdr, conn).await?;
         let snap: Snapshot = serde_json::from_str(&json)
             .map_err(|e| zbus::fdo::Error::InvalidArgs(e.to_string()))?;
         tx.send_replace(snap);
+        Ok(())
+    }
+
+    /// Called by our cursor script only (her gaze follows it): `json` is `[x, y]` in desktop pixels.
+    async fn cursor(
+        &self,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+        json: String,
+    ) -> zbus::fdo::Result<()> {
+        let Some(tx) = &self.cursor else {
+            return Ok(());
+        };
+        from_kwin(&hdr, conn).await?;
+        let [x, y]: [f64; 2] = serde_json::from_str(&json)
+            .map_err(|e| zbus::fdo::Error::InvalidArgs(e.to_string()))?;
+        tx.send_replace(Some((x, y)));
         Ok(())
     }
 
@@ -95,12 +120,14 @@ pub async fn serve(
     status: Arc<SharedStatus>,
     agenda: SharedAgenda,
     windows: Option<watch::Sender<Snapshot>>,
+    cursor: Option<watch::Sender<Option<(f64, f64)>>>,
 ) -> zbus::Result<zbus::Connection> {
     let bus = FeltBus {
         proxy: Mutex::new(proxy),
         status,
         agenda,
         windows,
+        cursor,
     };
     connection::Builder::session()?
         .name("org.clockmost.Felt")?

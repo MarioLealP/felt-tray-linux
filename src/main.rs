@@ -86,11 +86,19 @@ fn main() -> Result<()> {
         cfg.client_bundle.clone(),
     ));
     let player = audio::Player::spawn(cfg.player.clone());
-    // Her body (the Godot overlay): its own thread; the overlay quits when felt-tray does.
-    let body = match &cfg.body {
-        Some(b) => Some(body::start(b, core.clone(), player.clone())?),
-        None => None,
+    // Her body (the Godot overlay): its own thread; the overlay quits when felt-tray does. It follows the
+    // cursor our KWin script reports over D-Bus.
+    let (cursor_tx, body) = match &cfg.body {
+        Some(b) => {
+            let (tx, rx) = tokio::sync::watch::channel(None);
+            (
+                Some(tx),
+                Some(body::start(b, core.clone(), player.clone(), rx)?),
+            )
+        }
+        None => (None, None),
     };
+    let with_body = body.is_some();
     let voice = voice::Voice::new(player, body);
     let chat = chat::Chat::new(core.clone(), voice.clone(), cfg.session_id.clone());
 
@@ -110,6 +118,7 @@ fn main() -> Result<()> {
             status.clone(),
             agenda.clone(),
             windows_tx,
+            cursor_tx,
         ))
         .context("can't claim org.clockmost.Felt on the session bus (already running?)")?;
     let tray = if cfg.tray_icon {
@@ -175,6 +184,11 @@ fn main() -> Result<()> {
     if let Err(e) = rt.block_on(screen::kwin::load_script(&bus_conn)) {
         tracing::info!("no KWin script (not on KDE?): {e:#}");
     }
+    if with_body && let Err(e) = rt.block_on(body::load_cursor_script(&bus_conn)) {
+        tracing::info!(
+            "no KWin cursor feed (not on KDE?) - her eyes won't follow the mouse: {e:#}"
+        );
+    }
     if let Some(rx) = windows_rx {
         let screen = screen::Screen {
             core: core.clone(),
@@ -227,7 +241,12 @@ fn main() -> Result<()> {
             Event::UserEvent(UiEvent::Quit) => {
                 win = None;
                 let c = bus_conn.clone();
-                rt.block_on(async move { screen::kwin::unload_script(&c).await.ok() });
+                rt.block_on(async move {
+                    screen::kwin::unload_script(&c).await.ok();
+                    if with_body {
+                        body::unload_cursor_script(&c).await.ok();
+                    }
+                });
                 if let Some(t) = tray.clone() {
                     rt.block_on(async move { t.shutdown().await });
                 }

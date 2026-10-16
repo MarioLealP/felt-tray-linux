@@ -3,6 +3,7 @@
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::sync::Arc;
+use std::time::Instant;
 
 use felt_state::BehaviorState;
 
@@ -28,6 +29,11 @@ pub struct Ctx {
     /// The current reply's face pose and bubble text, kept up while its later sentences play.
     pub pose: RefCell<String>,
     pub bubble: RefCell<String>,
+    /// Between a line going out and her reply starting (her gaze glances up-left).
+    pub thinking: Cell<bool>,
+    /// She's talking until then (her gaze is on you); a little past each sentence so the gaps between
+    /// streamed sentences don't count as silence.
+    pub speaking_until: Cell<Instant>,
 }
 
 impl Ctx {
