@@ -53,6 +53,11 @@ pub async fn maybe_sit(
     }
 }
 
+/// Sitting on a window ledge right now (main.gd pins her hips there: nothing else may play a body clip).
+pub fn seated(ctx: &Ctx) -> bool {
+    ctx.world.borrow().seated_on.is_some()
+}
+
 /// Stands her up off the ledge if she's sitting on one (something needs her legs before the stay ran out).
 pub async fn stand_up(ctx: &Ctx) {
     stand(ctx, true).await;

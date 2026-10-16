@@ -23,8 +23,8 @@ const CROSS_MONITOR_CHANCE: f64 = 0.3;
 pub async fn idle_refresh(ctx: Rc<Ctx>) {
     loop {
         sleep_between(10.0, 18.0).await;
-        if ctx.behavior.busy() || !presence::visible(&ctx) {
-            continue;
+        if ctx.behavior.busy() || !presence::visible(&ctx) || ledge::seated(&ctx) {
+            continue; // a ledge sit holds its own pose
         }
         let tag = if ctx.behavior.sitting() {
             SITTING_IDLE
@@ -54,7 +54,12 @@ pub async fn run(ctx: Rc<Ctx>) {
             m.as_dict()
         };
         let (boredom, energy) = (mood["boredom"], mood["energy"]);
-        if ctx.behavior.sitting() {
+        if ledge::seated(&ctx) {
+            // sitting on a window's edge: mostly stay, sometimes get up (the stay timer also ends it)
+            if rand::rng().random_bool(0.3) {
+                ledge::stand_up(&ctx).await;
+            }
+        } else if ctx.behavior.sitting() {
             let w = scale(sitting_weights(hour), boredom, energy);
             sitting(&ctx, pick(&w)).await;
         } else {
@@ -72,8 +77,20 @@ pub async fn run(ctx: Rc<Ctx>) {
     }
 }
 
-/// Usually a floor wander; sometimes (WP-23) up onto a window's ledge, where she may sit a while.
+/// Usually a floor wander; sometimes (WP-23) up onto a window's ledge, where she may sit a while. Up on a
+/// ledge: a stroll along it, or the way back down - never a floor walk at ledge height off its end.
 async fn walk(ctx: &Rc<Ctx>, mood: &BTreeMap<String, f64>) {
+    if !nav::on_floor(ctx) {
+        let plan = if rand::rng().random_bool(0.5) {
+            nav::plan_stroll(ctx)
+        } else {
+            nav::plan_down(ctx)
+        };
+        if let Some(plan) = plan {
+            nav::run_plan(ctx, &plan).await;
+        }
+        return;
+    }
     if rand::rng().random_bool(nav::PLATFORM_ROAM_CHANCE)
         && let Some((plan, ledge)) = nav::plan_ledge_walk(ctx, mood)
     {

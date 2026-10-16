@@ -187,6 +187,7 @@ fn can_change(ctx: &Ctx) -> bool {
         && !ctx.behavior.busy()
         && !ctx.behavior.sitting()
         && ctx.world.borrow().seated_on.is_none()
+        && super::nav::on_floor(ctx)
         && ctx.speaking_until.get() <= Instant::now()
 }
 

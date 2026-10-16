@@ -108,6 +108,60 @@ pub async fn go_to_ledge(ctx: &Rc<Ctx>) {
     }
 }
 
+/// On a floor (or not anchored yet) - as opposed to up on a window's ledge.
+pub fn on_floor(ctx: &Ctx) -> bool {
+    let w = ctx.world.borrow();
+    w.current
+        .as_deref()
+        .and_then(|id| w.platform(id))
+        .is_none_or(|p| p.kind == "floor")
+}
+
+/// A walk to another spot on the ledge she's on, kept inside its edges.
+pub fn plan_stroll(ctx: &Ctx) -> Option<Vec<Step>> {
+    let w = ctx.world.borrow();
+    let here = w.platform(w.current.as_deref()?)?;
+    let margin = her_width_px(ctx) / 2.0 + 5.0;
+    let (lo, hi) = (here.x0 + margin, here.x1 - margin);
+    (hi > lo).then(|| {
+        vec![Step::Walk(Walk {
+            x_px: rand::rng().random_range(lo..hi),
+        })]
+    })
+}
+
+/// The way down from her ledge to a spot on that monitor's floor.
+pub fn plan_down(ctx: &Ctx) -> Option<Vec<Step>> {
+    let w = ctx.world.borrow();
+    let current = w.current.clone()?;
+    let g = moves::geometry(ctx);
+    let her_x = g.world_to_px_x(ctx.current_x.get());
+    let floor = w
+        .platforms
+        .iter()
+        .filter(|p| p.kind == "floor")
+        .min_by(|a, b| {
+            let d = |p: &Platform| ((p.x0 + p.x1) / 2.0 - her_x).abs();
+            d(a).total_cmp(&d(b))
+        })?;
+    let margin = her_width_px(ctx);
+    let (lo, hi) = (floor.x0 + margin, floor.x1 - margin);
+    let x = if hi > lo {
+        rand::rng().random_range(lo..hi)
+    } else {
+        (floor.x0 + floor.x1) / 2.0
+    };
+    let ppm = if g.ppm > 0.0 { g.ppm } else { 1.0 };
+    felt_navigation::plan_route(
+        &world::nav_platforms(&w.platforms),
+        ppm,
+        &current,
+        her_x,
+        &floor.id,
+        x,
+    )
+}
+
 /// A route from where she stands to a mood-weighted ledge, and that ledge. None when there's nothing wide
 /// enough, she isn't anchored yet, or there's no route.
 pub fn plan_ledge_walk(ctx: &Ctx, mood: &BTreeMap<String, f64>) -> Option<(Vec<Step>, Platform)> {
