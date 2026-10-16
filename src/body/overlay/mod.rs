@@ -87,10 +87,6 @@ impl Overlay {
         self.seen.lock().expect("seen lock").current_tag.clone()
     }
 
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "the world/roam loops read it (port step 4)")
-    )]
     pub fn geometry(&self) -> Option<Value> {
         self.seen.lock().expect("seen lock").geometry.clone()
     }

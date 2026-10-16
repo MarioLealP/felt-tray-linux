@@ -127,8 +127,8 @@ impl Drop for ClearThinkingOnDrop<'_> {
 pub struct BehaviorState<O: OverlayLike> {
     overlay: Rc<O>,
     clock: Rc<dyn Clock>,
-    /// "standing" (or "sitting" - set by ambient behavior).
-    pub posture: String,
+    /// "standing" (or "sitting" - set by ambient behavior). A cell: the state is shared (`Rc`) by every loop.
+    posture: RefCell<String>,
     base_lock: AsyncLock,
     upper_lock: AsyncLock,
     thinking_task: RefCell<Option<JoinHandle<()>>>,
@@ -141,12 +141,26 @@ impl<O: OverlayLike + 'static> BehaviorState<O> {
         Self {
             overlay,
             clock,
-            posture: "standing".to_string(),
+            posture: RefCell::new("standing".to_string()),
             base_lock: AsyncLock::new(),
             upper_lock: AsyncLock::new(),
             thinking_task: RefCell::new(None),
             stop_thinking: AsyncEvent::new(),
         }
+    }
+
+    #[must_use]
+    pub fn posture(&self) -> String {
+        self.posture.borrow().clone()
+    }
+
+    #[must_use]
+    pub fn sitting(&self) -> bool {
+        *self.posture.borrow() == "sitting"
+    }
+
+    pub fn set_posture(&self, posture: &str) {
+        posture.clone_into(&mut self.posture.borrow_mut());
     }
 
     /// Anything at all is playing (either layer) - what the ambient,

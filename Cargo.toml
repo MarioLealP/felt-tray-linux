@@ -26,6 +26,7 @@ publish.workspace = true
 # her body's logic (crates/)
 felt-faces = { path = "crates/faces" }
 felt-gaze = { path = "crates/gaze" }
+felt-geometry = { path = "crates/geometry" }
 felt-library = { path = "crates/library" }
 felt-mood = { path = "crates/mood" }
 felt-state = { path = "crates/state" }
@@ -36,6 +37,7 @@ getrandom = "0.4"
 image = { version = "0.25.10", default-features = false, features = ["jpeg"] }
 ksni = "0.3.6"
 png = "0.18.1"
+rand = "0.10"
 regex = "1.13.1"
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "http2", "json", "multipart"] }
 serde = { version = "1.0.229", features = ["derive"] }

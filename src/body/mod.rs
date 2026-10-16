@@ -3,6 +3,7 @@
 //! like the Python event loop it was ported from; the rest of felt-tray talks to it through a [`Handle`].
 //! This file only wires the parts together.
 
+mod ambient;
 mod assets;
 mod clock;
 mod ctx;
@@ -10,6 +11,7 @@ mod events;
 mod gaze;
 mod lipsync;
 mod mood;
+mod moves;
 mod overlay;
 mod reply;
 mod speech;
@@ -150,8 +152,11 @@ async fn run(
         speaking_until: Cell::new(Instant::now()),
         mood: RefCell::new(mood::load(&mood_path)),
         events,
+        current_x: Cell::new(0.0),
     });
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
+    tokio::task::spawn_local(ambient::idle_refresh(ctx.clone()));
+    tokio::task::spawn_local(ambient::run(ctx.clone()));
     tokio::task::spawn_local(gaze::run(ctx.clone(), cursor));
     let (sentences, queue) = mpsc::unbounded_channel();
     tokio::task::spawn_local(speech::run(ctx.clone(), queue));

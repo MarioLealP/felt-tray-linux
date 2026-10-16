@@ -56,13 +56,16 @@ impl Pending {
         let tags = &ctx.assets.tags;
         let (tag, stand_up) = felt_library::resolve_posture_tag(
             &raw,
-            &ctx.behavior.posture,
+            &ctx.behavior.posture(),
             tags,
             ctx.behavior.is_upper(&raw),
         );
         let mut clips = Vec::new();
-        if stand_up && tags.contains("transition/sit_to_stand") {
-            clips.push("transition/sit_to_stand".to_owned());
+        if stand_up {
+            if tags.contains("transition/sit_to_stand") {
+                clips.push("transition/sit_to_stand".to_owned());
+            }
+            ctx.behavior.set_posture("standing");
         }
         let pose = felt_faces::pose_for_reaction(self.emotion.as_deref(), &tag);
         ctx.pose.replace(pose.to_owned());

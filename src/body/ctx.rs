@@ -38,6 +38,8 @@ pub struct Ctx {
     pub speaking_until: Cell<Instant>,
     pub mood: RefCell<Mood>,
     pub events: Events,
+    /// Where she is (world x) as far as we know: set when she's sent somewhere.
+    pub current_x: Cell<f64>,
 }
 
 impl Ctx {
