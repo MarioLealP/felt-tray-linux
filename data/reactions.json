@@ -1,0 +1,82 @@
+{
+  "idle_micro": [
+    {"pose": "soft_smile", "weight": 3},
+    {"pose": "curious", "weight": 3, "mood_boost": {"boredom": 2.5}},
+    {"pose": "pout", "weight": 2, "mood_boost": {"annoyance": 2.0}}
+  ],
+  "reply:happy": [
+    {"pose": "soft_smile", "weight": 3},
+    {"pose": "grin", "weight": 2, "mood_boost": {"happiness": 1.8}}
+  ],
+  "reply:excited": [
+    {"pose": "grin", "weight": 3, "mood_boost": {"energy": 1.5}},
+    {"pose": "soft_smile", "weight": 1}
+  ],
+  "reply:amused": [
+    {"pose": "smug", "weight": 3},
+    {"pose": "grin", "weight": 2}
+  ],
+  "reply:sad": [
+    {"pose": "sad", "weight": 4}
+  ],
+  "reply:annoyed": [
+    {"pose": "annoyed", "weight": 3, "mood_boost": {"annoyance": 2.0}}
+  ],
+  "reply:surprised": [
+    {"pose": "wide_eyed", "weight": 3}
+  ],
+  "reply:thinking": [
+    {"pose": "thinking", "weight": 3}
+  ],
+  "reply:sleepy": [
+    {"pose": "sleepy", "weight": 3}
+  ],
+  "reply:neutral": [
+    {"pose": "neutral", "weight": 3}
+  ],
+  "game_start": [
+    {"pose": "curious", "weight": 3, "speak": true}
+  ],
+  "game_stop": [
+    {"pose": "soft_smile", "weight": 3, "speak": true}
+  ],
+  "mash": [
+    {"pose": "wide_eyed", "weight": 3},
+    {"pose": "shocked_comedic", "weight": 1}
+  ],
+  "gpu_hot": [
+    {"pose": "sleepy", "weight": 3, "speak": true, "prop": "water_bottle"}
+  ],
+  "call_lively": [
+    {"pose": "grin", "weight": 3, "tag": "emotion/laughing"},
+    {"pose": "soft_smile", "weight": 2, "tag": "emotion/laughing"}
+  ],
+  "afk_end": [
+    {"pose": "soft_smile", "weight": 3, "tag": "greeting", "speak": true}
+  ],
+  "call_join_guess": [
+    {"pose": "curious", "weight": 2, "tag": "gesture/wave", "speak": true},
+    {"pose": "soft_smile", "weight": 2, "tag": "gesture/wave", "speak": true}
+  ],
+  "music_start": [
+    {"pose": "soft_smile", "weight": 3},
+    {"pose": "curious", "weight": 2}
+  ],
+  "music_high_energy": [
+    {"pose": "grin", "weight": 2, "tag": "dance", "mood_boost": {"happiness": 2.5, "energy": 2.0}},
+    {"pose": "grin", "weight": 2},
+    {"pose": "soft_smile", "weight": 2}
+  ],
+  "music_stop": [
+    {"pose": "neutral", "weight": 3},
+    {"pose": "pout", "weight": 1, "mood_boost": {"happiness": 1.5}}
+  ],
+  "afk_start": [
+    {"pose": "sleepy", "weight": 3, "tag": "sleepy/yawn"},
+    {"pose": "curious", "weight": 1, "tag": "ambient/look_around"}
+  ],
+  "call_quiet": [
+    {"pose": "soft_smile", "weight": 3},
+    {"pose": "curious", "weight": 1}
+  ]
+}

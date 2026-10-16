@@ -1,0 +1,17 @@
+{
+  "neutral": {},
+  "soft_smile": {"Fcl_EYE_Joy": 0.3, "Fcl_MTH_Up": 0.5},
+  "grin": {"Fcl_EYE_Joy": 0.8, "Fcl_BRW_Joy": 0.6, "Fcl_MTH_Fun": 0.7},
+  "smug": {"Fcl_BRW_Fun": 0.5, "Fcl_EYE_Joy_L": 0.5, "Fcl_MTH_Up": 0.5, "Fcl_MTH_SkinFung": 0.4},
+  "wink": {"Fcl_EYE_Close_R": 1.0, "Fcl_MTH_Up": 0.6},
+  "pout": {"Fcl_BRW_Angry": 0.4, "Fcl_MTH_Small": 0.8},
+  "thinking": {"Fcl_BRW_Sorrow": 0.25, "Fcl_MTH_Small": 0.3},
+  "sleepy": {"Fcl_EYE_Close": 0.45, "Fcl_BRW_Sorrow": 0.2},
+  "wide_eyed": {"Fcl_EYE_Spread": 0.8, "Fcl_BRW_Surprised": 0.8},
+  "shocked_comedic": {"Fcl_EYE_Surprised": 1.0, "Fcl_EYE_Highlight_Hide": 1.0, "Fcl_MTH_Large": 0.6},
+  "annoyed": {"Fcl_BRW_Angry": 0.6, "Fcl_EYE_Angry": 0.4, "Fcl_MTH_Down": 0.4},
+  "sad": {"Fcl_BRW_Sorrow": 0.7, "Fcl_EYE_Sorrow": 0.5, "Fcl_MTH_Down": 0.5},
+  "embarrassed": {"Fcl_BRW_Sorrow": 0.4, "Fcl_EYE_Joy": 0.4, "Fcl_MTH_Small": 0.5},
+  "curious": {"Fcl_BRW_Surprised": 0.4},
+  "sheepish": {"Fcl_BRW_Sorrow": 0.3, "Fcl_MTH_Small": 0.4}
+}

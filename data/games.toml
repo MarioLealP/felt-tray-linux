@@ -1,0 +1,34 @@
+# Felt's game detection (WP-17, automatic since 2026-09-26). Mario's
+# policy, not a secret - versioned like reactions.json/tags.json.
+#
+# Games are recognized AUTOMATICALLY - there is no list to maintain. A
+# process counts as a game when it has a visible top-level window and
+# either its exe lives under a game library (every Steam library's
+# steamapps\common, Epic's install locations, GOG's install paths), or
+# Windows itself lists it as a game (Game Bar's GameConfigStore). The
+# name Felt says is the game's window title, cleaned up ("Factorio
+# 2.0.55" -> "Factorio"). Launchers, crash handlers, anti-cheat, overlays,
+# Wallpaper Engine, browsers and Discord are ignored by a built-in list
+# (signals/games.py). Changes here are picked up within ~10 minutes.
+#
+# This file only holds the exceptions. Exe names are matched
+# case-insensitively against the basename (e.g. "endfield.exe").
+
+# Extra games that live outside every library (manual installs). An entry
+# here wins over the built-in ignore patterns.
+games = [
+    "endfield.exe",
+]
+
+# Extra things that are never games. Exact exe names or glob patterns
+# ("*tool*").
+ignore = [
+    "games.exe",   # the GRYPHLINK launcher's own window (F:\Games\GRYPHLINK)
+]
+
+# Extra library folders: any windowed exe under them counts as a game
+# (unless ignored). F:\Games holds Endfield (GRYPHLINK), FFXIV, WoW,
+# Factorio's standalone install.
+roots = [
+    'F:\Games',
+]

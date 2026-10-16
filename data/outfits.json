@@ -1,0 +1,143 @@
+{
+  "_doc": "WP-27 outfit catalogue: id, vrm (res:// path in felt-godot-overlay), pool daily|themed|special, label. daily = the everyday random pick (default = felt.vrm, the only one that wears the WP-33 tee), themed = rare ambient, special = scheduled/triggered only (pyjama night, halloween, xmas/reindeer, bikini). variants = Mario-approved Tier-A recolour/restyle VRMs of that outfit (WP-27, gitignored under characters/variants/); a change picks the original or one variant at random. accessories = WP-32 props worn while this outfit is on (accessories.py).",
+  "outfits": [
+    {
+      "id": "default",
+      "vrm": "res://characters/felt.vrm",
+      "pool": "daily",
+      "label": "Default"
+    },
+    {
+      "id": "general_1",
+      "vrm": "res://characters/Felt_General_1.vrm",
+      "pool": "daily",
+      "label": "General 1",
+      "variants": [
+        "res://characters/variants/Felt_General_1__winter.vrm",
+        "res://characters/variants/Felt_General_1__plaid.vrm"
+      ]
+    },
+    {
+      "id": "general_2",
+      "vrm": "res://characters/Felt_General_2.vrm",
+      "pool": "daily",
+      "label": "General 2"
+    },
+    {
+      "id": "general_3",
+      "vrm": "res://characters/Felt_General_3.vrm",
+      "pool": "daily",
+      "label": "General 3"
+    },
+    {
+      "id": "general_4",
+      "vrm": "res://characters/Felt_General_4.vrm",
+      "pool": "daily",
+      "label": "General 4"
+    },
+    {
+      "id": "lacedress",
+      "vrm": "res://characters/Felt_LaceDress.vrm",
+      "pool": "daily",
+      "label": "Lace dress",
+      "variants": [
+        "res://characters/variants/Felt_LaceDress__autumn.vrm",
+        "res://characters/variants/Felt_LaceDress__winter.vrm",
+        "res://characters/variants/Felt_LaceDress__pastel.vrm"
+      ],
+      "accessories": [
+        "necklace"
+      ]
+    },
+    {
+      "id": "nightouting",
+      "vrm": "res://characters/Felt_NightOuting.vrm",
+      "pool": "daily",
+      "label": "Night outing",
+      "variants": [
+        "res://characters/variants/Felt_NightOuting__autumn.vrm"
+      ],
+      "accessories": [
+        "choker"
+      ]
+    },
+    {
+      "id": "sport",
+      "vrm": "res://characters/Felt_Sport.vrm",
+      "pool": "daily",
+      "label": "Sport",
+      "variants": [
+        "res://characters/variants/Felt_Sport__plaid.vrm",
+        "res://characters/variants/Felt_Sport__pastel.vrm",
+        "res://characters/variants/Felt_Sport__winter.vrm",
+        "res://characters/variants/Felt_Sport__autumn.vrm"
+      ],
+      "accessories": [
+        "cap"
+      ]
+    },
+    {
+      "id": "china",
+      "vrm": "res://characters/Felt_China.vrm",
+      "pool": "themed",
+      "label": "China",
+      "accessories": [
+        "hair_flower"
+      ]
+    },
+    {
+      "id": "maid",
+      "vrm": "res://characters/Felt_Maid.vrm",
+      "pool": "themed",
+      "label": "Maid"
+    },
+    {
+      "id": "cyberpunk",
+      "vrm": "res://characters/Felt_Cyberpunk.vrm",
+      "pool": "themed",
+      "label": "Cyberpunk"
+    },
+    {
+      "id": "cyberpunk2",
+      "vrm": "res://characters/Felt_Cyberpunk2.vrm",
+      "pool": "themed",
+      "label": "Cyberpunk 2"
+    },
+    {
+      "id": "pyjama",
+      "vrm": "res://characters/Felt_Pyjama.vrm",
+      "pool": "special",
+      "label": "Pyjama"
+    },
+    {
+      "id": "halloween",
+      "vrm": "res://characters/Felt_Halloween.vrm",
+      "pool": "special",
+      "label": "Halloween",
+      "accessories": [
+        "witch_hat"
+      ]
+    },
+    {
+      "id": "xmas",
+      "vrm": "res://characters/Felt_Xmas.vrm",
+      "pool": "special",
+      "label": "Xmas",
+      "accessories": [
+        "santa_hat"
+      ]
+    },
+    {
+      "id": "reindeer",
+      "vrm": "res://characters/Felt_Reindeer.vrm",
+      "pool": "special",
+      "label": "Reindeer"
+    },
+    {
+      "id": "bikini",
+      "vrm": "res://characters/Felt_Bikini.vrm",
+      "pool": "special",
+      "label": "Bikini"
+    }
+  ]
+}
