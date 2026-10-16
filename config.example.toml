@@ -55,3 +55,4 @@ tray_icon = true
 # port = 8765
 # data_dir = "/usr/share/felt-tray/body"
 # rhubarb = ["rhubarb", "--recognizer", "phonetic"]      (times her mouth to her voice; package rhubarb-lip-sync)
+# sounds = "/path/to/Felt/Sounds"     (her recorded lines: presence/zip_it_1.wav ...)

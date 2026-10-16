@@ -1,6 +1,7 @@
 //! Her hide / quiet switches (WP-42.5), set from the Felt app anywhere (they live in felt-core). Polled every
-//! 5 s. Quiet: she stops mid-sentence and says nothing on her own (screen reactions, her own lines) - an
-//! answer you asked for still speaks. Hide: her body walks off screen, and nothing unprompted either. Urgent lines
+//! 5 s. Quiet (as on Windows: hide + hush): she stops mid-sentence, says "zip it", leaves the screen and says
+//! nothing on her own (screen reactions, her own lines) - an answer you asked for still speaks. Hide: her body
+//! walks off screen, and nothing unprompted either. Urgent lines
 //! (calendar heads-up) always get through. A heartbeat every 15 s tells felt-core the PC side is alive.
 
 use std::sync::Arc;
@@ -54,11 +55,13 @@ pub async fn run(core: Arc<FeltCore>, switches: Arc<Switches>, voice: Voice) {
                 if s.quiet.on && !was_quiet {
                     voice.player().stop(); // cut off mid-sentence
                 }
+                // quiet first: her "zip it" plays before she walks off
                 if s.quiet.on != was_quiet || applied.is_none() {
                     voice.set_quiet(s.quiet.on);
                 }
-                if s.hide.on != was_hidden || applied.is_none() {
-                    voice.set_hidden(s.hide.on);
+                let (away, was_away) = (s.hide.on || s.quiet.on, was_hidden || was_quiet);
+                if away != was_away || applied.is_none() {
+                    voice.set_hidden(away);
                 }
                 if applied != Some(s.version) {
                     tracing::info!(
@@ -76,7 +79,7 @@ pub async fn run(core: Arc<FeltCore>, switches: Arc<Switches>, voice: Voice) {
             let report = json!({
                 "animation": voice.has_body(),
                 "applied": applied,
-                "presence": if switches.hidden.load(Ordering::Relaxed) { "hidden" } else { "visible" },
+                "presence": if switches.unprompted_ok() { "visible" } else { "hidden" },
                 "hushed": switches.quiet.load(Ordering::Relaxed),
             });
             if let Err(e) = core.report_desktop(&report).await {

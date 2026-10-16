@@ -70,6 +70,9 @@ pub struct Body {
     /// Rhubarb Lip Sync (times her mouth to her voice, offline).
     #[serde(default = "default_rhubarb")]
     pub rhubarb: Vec<String>,
+    /// Her recorded clips (`presence/zip_it_1.wav` ...); none = she has no canned lines.
+    #[serde(default)]
+    pub sounds: Option<PathBuf>,
 }
 
 fn default_body_port() -> u16 {

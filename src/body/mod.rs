@@ -9,6 +9,7 @@ mod clock;
 mod ctx;
 mod events;
 mod gaze;
+mod hush;
 mod lipsync;
 mod mood;
 mod moves;
@@ -181,6 +182,7 @@ async fn run(
         exit_left: Cell::new(true),
         sentences,
         quiet: Cell::new(false),
+        sounds: cfg.sounds.clone(),
         last_pick: RefCell::new(HashMap::new()),
         streak: RefCell::new(Vec::new()),
     });
@@ -208,7 +210,7 @@ async fn run(
             } => speech::say(&ctx, text, audio, tag, emotion, prompted),
             Msg::Hidden(true) => presence::hide(&ctx),
             Msg::Hidden(false) => presence::show(&ctx),
-            Msg::Quiet(q) => ctx.quiet.set(q),
+            Msg::Quiet(q) => hush::set(&ctx, q).await,
             Msg::More { text, audio } => speech::more(&ctx, text, audio),
         }
     }

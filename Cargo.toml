@@ -34,6 +34,7 @@ felt-library = { path = "crates/library" }
 felt-mood = { path = "crates/mood" }
 felt-presence = { path = "crates/presence" }
 felt-reaction-table = { path = "crates/reaction-table" }
+felt-sounds = { path = "crates/sounds" }
 felt-state = { path = "crates/state" }
 felt-tone = { path = "crates/tone" }
 

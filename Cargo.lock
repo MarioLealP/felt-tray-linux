@@ -826,6 +826,7 @@ dependencies = [
  "felt-mood",
  "felt-presence",
  "felt-reaction-table",
+ "felt-sounds",
  "felt-state",
  "felt-tone",
  "futures-util",
