@@ -25,6 +25,7 @@ publish.workspace = true
 [dependencies]
 # her body's logic (crates/)
 felt-afk = { path = "crates/afk" }
+felt-beat = { path = "crates/beat" }
 felt-faces = { path = "crates/faces" }
 felt-games = { path = "crates/games" }
 felt-gaze = { path = "crates/gaze" }
@@ -32,6 +33,7 @@ felt-geometry = { path = "crates/geometry" }
 felt-gpu = { path = "crates/gpu" }
 felt-library = { path = "crates/library" }
 felt-mood = { path = "crates/mood" }
+felt-music-events = { path = "crates/music-events" }
 felt-presence = { path = "crates/presence" }
 felt-reaction-table = { path = "crates/reaction-table" }
 felt-sounds = { path = "crates/sounds" }

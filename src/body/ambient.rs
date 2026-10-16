@@ -52,7 +52,15 @@ pub async fn run(ctx: Rc<Ctx>) {
             let w = scale(sitting_weights(hour), boredom, energy);
             sitting(&ctx, pick(&w)).await;
         } else {
-            let w = scale(standing_weights(hour), boredom, energy);
+            let mut w = scale(standing_weights(hour), boredom, energy);
+            // WP-16: a dance now and then while real music plays and she's up for it
+            if ctx.tempo_locked.get()
+                && ctx.assets.tags.contains("dance")
+                && energy >= 0.6
+                && mood["happiness"] >= 0.6
+            {
+                w.push(("dance", 15.0));
+            }
             standing(&ctx, pick(&w)).await;
         }
     }
@@ -74,6 +82,7 @@ async fn standing(ctx: &Ctx, action: &str) {
         "sit_down" => {
             moves::sit_down(ctx).await;
         }
+        "dance" => play_one_of(ctx, &["dance".to_owned()]).await,
         "surprise" => {
             let picks: Vec<String> = ctx
                 .assets

@@ -73,6 +73,27 @@ pub struct Body {
     /// Her recorded clips (`presence/zip_it_1.wav` ...); none = she has no canned lines.
     #[serde(default)]
     pub sounds: Option<PathBuf>,
+    /// Captures what the speakers play (16 kHz mono f32 on stdout) so she can bob to music; [] = off.
+    #[serde(default = "default_music_capture")]
+    pub music_capture: Vec<String>,
+}
+
+fn default_music_capture() -> Vec<String> {
+    [
+        "pw-record",
+        "--raw",
+        "-P",
+        "{ stream.capture.sink=true media.name=\"Felt listening for a beat\" }",
+        "--rate",
+        "16000",
+        "--channels",
+        "1",
+        "--format",
+        "f32",
+        "-",
+    ]
+    .map(String::from)
+    .to_vec()
 }
 
 fn default_body_port() -> u16 {

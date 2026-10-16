@@ -30,6 +30,11 @@ pub async fn signal_event(ctx: &Rc<Ctx>, key: &str, details: Value) {
     }
 }
 
+/// Just the table's face/body for `key` (music events: no spoken line).
+pub async fn reaction(ctx: &Rc<Ctx>, key: &str) {
+    fire(ctx, key).await;
+}
+
 async fn fire(ctx: &Rc<Ctx>, key: &str) -> Option<Entry> {
     if !presence::visible(ctx) {
         return None;

@@ -13,6 +13,7 @@ mod hush;
 mod lipsync;
 mod mood;
 mod moves;
+mod music;
 mod overlay;
 mod presence;
 mod react;
@@ -184,6 +185,7 @@ async fn run(
         quiet: Cell::new(false),
         sounds: cfg.sounds.clone(),
         hushed_at: Cell::new(None),
+        tempo_locked: Cell::new(false),
         last_pick: RefCell::new(HashMap::new()),
         streak: RefCell::new(Vec::new()),
     });
@@ -192,6 +194,9 @@ async fn run(
     tokio::task::spawn_local(ambient::run(ctx.clone()));
     tokio::task::spawn_local(gaze::run(ctx.clone(), cursor));
     tokio::task::spawn_local(signals::run(ctx.clone(), windows, cfg.data_dir.clone()));
+    if !cfg.music_capture.is_empty() {
+        tokio::task::spawn_local(music::run(ctx.clone(), cfg.music_capture.clone()));
+    }
     tokio::task::spawn_local(speech::run(ctx.clone(), queue));
     while let Some(msg) = rx.recv().await {
         match msg {

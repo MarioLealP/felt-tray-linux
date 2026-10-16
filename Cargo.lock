@@ -817,6 +817,7 @@ version = "0.5.0"
 dependencies = [
  "anyhow",
  "felt-afk",
+ "felt-beat",
  "felt-faces",
  "felt-games",
  "felt-gaze",
@@ -824,6 +825,7 @@ dependencies = [
  "felt-gpu",
  "felt-library",
  "felt-mood",
+ "felt-music-events",
  "felt-presence",
  "felt-reaction-table",
  "felt-sounds",
