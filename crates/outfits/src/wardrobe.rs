@@ -59,7 +59,15 @@ impl WardrobeStore for FileWardrobe {
 
     fn save(&self, state: &BTreeMap<String, Value>) {
         let text = serde_json::to_string_pretty(state).expect("wardrobe: state serialises");
-        std::fs::write(&self.path, text).expect("wardrobe: cannot write wardrobe.json");
+        // write-then-rename: a reader never sees a half-written file; a temp name per write, so two saves
+        // racing each other each rename their own complete file
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let tmp = self
+            .path
+            .with_extension(format!("json.{}.{n}.tmp", std::process::id()));
+        std::fs::write(&tmp, text).expect("wardrobe: cannot write wardrobe.json");
+        std::fs::rename(&tmp, &self.path).expect("wardrobe: cannot replace wardrobe.json");
     }
 
     fn apply_tee(&self, overlay: &dyn Overlay, tee_name: &str) {

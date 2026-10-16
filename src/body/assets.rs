@@ -87,9 +87,9 @@ mod tests {
         let mut a = with_tags(&[]);
         a.poses = felt_faces::load_face_poses(&data.join("face_poses.json"));
         assert!(!a.poses.is_empty());
-        let (name, _) = a.poses.iter().next().unwrap();
+        // "neutral" is legitimately empty; soft_smile has shapes
         assert!(
-            a.pose_regions(name)
+            a.pose_regions("soft_smile")
                 .as_object()
                 .is_some_and(|o| !o.is_empty())
         );
