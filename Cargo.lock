@@ -828,6 +828,7 @@ dependencies = [
  "felt-mood",
  "felt-music-events",
  "felt-navigation",
+ "felt-outfits",
  "felt-presence",
  "felt-reaction-table",
  "felt-sounds",

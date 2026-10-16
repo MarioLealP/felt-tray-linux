@@ -34,6 +34,7 @@ felt-gpu = { path = "crates/gpu" }
 felt-ledge-sit = { path = "crates/ledge-sit" }
 felt-library = { path = "crates/library" }
 felt-mood = { path = "crates/mood" }
+felt-outfits = { path = "crates/outfits" }
 felt-music-events = { path = "crates/music-events" }
 felt-navigation = { path = "crates/navigation" }
 felt-presence = { path = "crates/presence" }

@@ -16,12 +16,14 @@ mod mood;
 mod moves;
 mod music;
 mod nav;
+mod outfits;
 mod overlay;
 mod presence;
 mod react;
 mod reply;
 mod signals;
 mod speech;
+mod tees;
 mod world;
 
 use std::cell::{Cell, RefCell};
@@ -166,10 +168,11 @@ async fn run(
         cfg.command.clone(),
         cfg.port,
     ));
-    tokio::spawn(idle_on_connect(o.clone()));
     let behavior = BehaviorState::new(Rc::new(Rig(o.clone())), Rc::new(MonotonicClock::new()));
     let state_dir = crate::config::data_dir().unwrap_or_else(|_| ".".into());
     let mood_path = state_dir.join("mood.json");
+    let wardrobe_path = outfits::wardrobe_path(&state_dir);
+    let outfits = outfits::Outfits::load(&cfg.data_dir, &wardrobe_path, cfg.outfit_ambient_chance);
     let events = events::Events::start(core.clone(), state_dir.join("day_start.json"));
     let (sentences, queue) = mpsc::unbounded_channel();
     let ctx = Rc::new(Ctx {
@@ -196,10 +199,14 @@ async fn run(
         hushed_at: Cell::new(None),
         tempo_locked: Cell::new(false),
         world: RefCell::new(world::World::default()),
+        outfits,
+        tees: cfg.tees.clone(),
+        wardrobe_path,
         cursor: Cell::new(None),
         last_pick: RefCell::new(HashMap::new()),
         streak: RefCell::new(Vec::new()),
     });
+    tokio::task::spawn_local(overlay_events(ctx.clone()));
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
     tokio::task::spawn_local(ambient::idle_refresh(ctx.clone()));
     tokio::task::spawn_local(ambient::run(ctx.clone()));
@@ -238,15 +245,17 @@ async fn run(
     }
 }
 
-/// A (re)started overlay starts from nothing: idle.
-async fn idle_on_connect(o: Arc<Overlay>) {
-    let mut rx = o.subscribe();
+/// A (re)started overlay starts from nothing: idle, and her outfit back on; main.gd's outfit answers.
+async fn overlay_events(ctx: Rc<Ctx>) {
+    let mut rx = ctx.overlay.subscribe();
     loop {
         match rx.recv().await {
             Ok(Event::Connected) => {
-                o.play_tag("idle", false, None).await;
+                ctx.overlay.play_tag("idle", false, None).await;
+                outfits::on_connected(&ctx).await;
             }
-            Ok(_) | Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
+            Ok(Event::Message(m)) => outfits::on_message(&ctx, &m).await,
+            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
             Err(_) => return,
         }
     }

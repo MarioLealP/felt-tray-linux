@@ -56,6 +56,10 @@ pub struct Ctx {
     pub world: RefCell<super::world::World>,
     /// The cursor's desktop position, as gaze last saw it.
     pub cursor: Cell<Option<(f64, f64)>>,
+    pub outfits: super::outfits::Outfits,
+    /// Her tees folder, when configured.
+    pub tees: Option<std::path::PathBuf>,
+    pub wardrobe_path: std::path::PathBuf,
     /// A steady beat is playing (music.rs): she may dance.
     pub tempo_locked: Cell<bool>,
     /// Since when the quiet switch has her hushed.

@@ -26,6 +26,7 @@ pub fn begin(
     emotion: Option<String>,
     prompted: bool,
 ) -> Pending {
+    super::outfits::on_reply_tag(ctx, tag.as_deref());
     let (c, text) = (ctx.clone(), text.to_owned());
     let pick = async move { pick_tag(&c, &text, tag.as_deref(), prompted).await };
     Pending {

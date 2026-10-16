@@ -14,7 +14,7 @@ use super::clock;
 use super::ctx::{CLIP_TIMEOUT_S, Ctx};
 use super::moves::{self, RUN_TAG, SITTING_IDLE, WALK_TAG};
 use super::presence;
-use super::{ledge, nav};
+use super::{ledge, nav, outfits};
 
 /// How far from a monitor's middle an ambient walk goes (world m), and how often it crosses monitors.
 const ROAM_REACH_M: f64 = 2.0;
@@ -42,6 +42,10 @@ pub async fn run(ctx: Rc<Ctx>) {
         sleep_between(20.0, 45.0).await;
         if ctx.behavior.busy() || !presence::visible(&ctx) {
             continue;
+        }
+        outfits::daily_tee(&ctx).await;
+        if outfits::tick(&ctx).await {
+            continue; // a change was this tick's action
         }
         let hour = clock::local().hour();
         let mood = {

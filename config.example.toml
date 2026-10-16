@@ -56,5 +56,7 @@ tray_icon = true
 # data_dir = "/usr/share/felt-tray/body"
 # rhubarb = ["rhubarb", "--recognizer", "phonetic"]      (times her mouth to her voice; package rhubarb-lip-sync)
 # sounds = "/path/to/Felt/Sounds"     (her recorded lines: presence/zip_it_1.wav ...)
+# tees = "/path/to/Felt/Assets/tees"  (her daily tee: <name>.png + tees_approved.json)
+# outfit_ambient_chance = 0.0015       (per ambient tick: a spontaneous outfit swap)
 # music_capture = ["pw-record", "--raw", "-P", "{ stream.capture.sink=true }", "--rate", "16000", "--channels", "1",
 #                  "--format", "f32", "-"]      (so she bobs to music; kept in memory only; [] = off)

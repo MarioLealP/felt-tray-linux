@@ -73,9 +73,19 @@ pub struct Body {
     /// Her recorded clips (`presence/zip_it_1.wav` ...); none = she has no canned lines.
     #[serde(default)]
     pub sounds: Option<PathBuf>,
+    /// Her tees (`<name>.png` + `tees_approved.json`); none = no daily tee.
+    #[serde(default)]
+    pub tees: Option<PathBuf>,
+    /// The chance per ambient tick (every 20-45 s) of an ambient outfit swap.
+    #[serde(default = "default_outfit_chance")]
+    pub outfit_ambient_chance: f64,
     /// Captures what the speakers play (16 kHz mono f32 on stdout) so she can bob to music; [] = off.
     #[serde(default = "default_music_capture")]
     pub music_capture: Vec<String>,
+}
+
+fn default_outfit_chance() -> f64 {
+    0.0015
 }
 
 fn default_music_capture() -> Vec<String> {
