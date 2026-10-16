@@ -3,14 +3,20 @@
 //! whatever connection is open, and those notices (not guessed durations) are what her behaviour waits on.
 //! [`supervisor`] keeps the overlay running and connected; this file is the shared handle everything else uses.
 
+mod commands;
 mod process;
+mod rig;
 pub mod supervisor;
+
+pub use rig::Rig;
 
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::Duration;
 
-use serde_json::{Value, json};
+use serde_json::Value;
+#[cfg(test)]
+use serde_json::json;
 use tokio::io::AsyncWriteExt;
 use tokio::net::tcp::OwnedWriteHalf;
 use tokio::sync::broadcast;
@@ -77,30 +83,15 @@ impl Overlay {
         true
     }
 
-    pub async fn play_tag(&self, tag: &str) -> bool {
-        self.send(&json!({ "tag": tag })).await
-    }
-
-    /// Plays a one-shot tag and waits for its real `finished` notice; `timeout` is only the safety net for a
-    /// dropped connection or a tag with no clips. Looping tags (`idle*`) never finish, so they don't wait.
-    pub async fn play_and_wait(&self, tag: &str, timeout: Duration) {
-        let mut rx = self.subscribe();
-        if !self.play_tag(tag).await || is_looping_tag(tag) {
-            return;
-        }
-        let done = wait_for(&mut rx, timeout, |m| {
-            m.get("finished").and_then(Value::as_str) == Some(tag)
-        })
-        .await;
-        if done.is_none() {
-            tracing::warn!("no finished notice for '{tag}' within {timeout:?} - continuing");
-        }
-    }
-
+    #[cfg_attr(not(test), expect(dead_code, reason = "gaze reads it (port step 4)"))]
     pub fn current_tag(&self) -> Option<String> {
         self.seen.lock().expect("seen lock").current_tag.clone()
     }
 
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "the world/roam loops read it (port step 4)")
+    )]
     pub fn geometry(&self) -> Option<Value> {
         self.seen.lock().expect("seen lock").geometry.clone()
     }

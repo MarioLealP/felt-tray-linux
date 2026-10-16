@@ -9,3 +9,4 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
+tokio = { version = "1.53.3", features = ["rt", "time"] }

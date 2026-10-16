@@ -16,9 +16,9 @@ use image::{DynamicImage, RgbImage};
 use tokio::sync::watch;
 use tokio::time::{Instant, sleep_until};
 
-use crate::audio::Player;
 use crate::controls::Switches;
 use crate::core::FeltCore;
+use crate::voice::Voice;
 use kwin::Snapshot;
 use policy::Blocklist;
 
@@ -31,7 +31,7 @@ const DEDUPE_DISTANCE: u32 = 6;
 
 pub struct Screen {
     pub core: Arc<FeltCore>,
-    pub player: Player,
+    pub voice: Voice,
     pub conn: zbus::Connection,
     pub blocklist: PathBuf,
     pub sample: Duration,
@@ -140,7 +140,8 @@ impl Screen {
                     target.label(),
                     reply.text.len()
                 );
-                self.player.play(reply.audio);
+                self.voice
+                    .say(&reply.text, reply.audio, reply.tag, reply.emotion);
             }
             Ok(None) => tracing::info!("screen: no reaction this time (503)"),
             Err(e) => tracing::warn!("screen: sending to felt-core failed: {e:#}"),

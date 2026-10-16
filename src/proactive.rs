@@ -8,10 +8,10 @@ use std::time::Duration;
 
 use serde::Deserialize;
 
-use crate::audio::Player;
 use crate::controls::Switches;
 use crate::core::FeltCore;
 use crate::notify::{Notifier, Popup};
+use crate::voice::Voice;
 
 const MIN_BACKOFF: Duration = Duration::from_secs(5);
 const MAX_BACKOFF: Duration = Duration::from_secs(60);
@@ -29,7 +29,7 @@ pub struct Item {
 
 pub async fn run(
     core: Arc<FeltCore>,
-    player: Player,
+    voice: Voice,
     notifier: Option<Notifier>,
     switches: Arc<Switches>,
 ) {
@@ -62,7 +62,7 @@ pub async fn run(
                     item.kind,
                     item.text.len()
                 );
-                player.play(audio);
+                voice.say(&item.text, audio, None, None);
             }
             other => {
                 if let Err(e) = other {

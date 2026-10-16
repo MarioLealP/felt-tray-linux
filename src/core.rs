@@ -22,6 +22,10 @@ pub struct Reply {
     pub text: String,
     pub audio: Vec<u8>,
     pub stream: Option<(String, u32)>,
+    /// A skill's animation tag (e.g. `reaction/weather/storm`), when one fired.
+    pub tag: Option<String>,
+    /// Her emotion, on screen reactions.
+    pub emotion: Option<String>,
 }
 
 pub enum Chunk {
@@ -74,9 +78,12 @@ impl FeltCore {
         let h = r.headers();
         let text = header(h, "X-Reply-Text").unwrap_or_default();
         let stream = stream_fields(header(h, "X-Reply-Stream"), header(h, "X-Reply-Chunks"));
+        let (tag, emotion) = (header(h, "X-Animation-Tag"), header(h, "X-Emotion"));
         Ok(Reply {
             text,
             stream,
+            tag,
+            emotion,
             audio: r.bytes().await?.to_vec(),
         })
     }
@@ -166,10 +173,14 @@ impl FeltCore {
             return Ok(None);
         }
         let r = r.error_for_status()?;
-        let text = header(r.headers(), "X-Reply-Text").unwrap_or_default();
+        let h = r.headers();
+        let text = header(h, "X-Reply-Text").unwrap_or_default();
+        let (tag, emotion) = (header(h, "X-Animation-Tag"), header(h, "X-Emotion"));
         Ok(Some(Reply {
             text,
             stream: None,
+            tag,
+            emotion,
             audio: r.bytes().await?.to_vec(),
         }))
     }
@@ -243,6 +254,26 @@ impl FeltCore {
         Ok(v.get("events")
             .cloned()
             .unwrap_or_else(|| serde_json::json!([])))
+    }
+
+    /// Her body's gesture for a reply felt-core didn't tag: felt-llm picks from `tags` (her animations on this
+    /// desktop). None when it can't (felt-llm offline, no pick, a tag not in the list).
+    pub async fn reaction_tag(&self, text: &str, tags: &[String]) -> Result<Option<String>> {
+        let r = self
+            .client()?
+            .post(format!("{}/v1/reaction-tag", self.base))
+            .json(&json!({ "text": text, "tags": tags }))
+            .timeout(Duration::from_secs(15))
+            .send()
+            .await?;
+        if !r.status().is_success() {
+            return Ok(None);
+        }
+        let v: serde_json::Value = r.json().await?;
+        Ok(v["tag"]
+            .as_str()
+            .filter(|t| tags.iter().any(|k| k == t))
+            .map(str::to_owned))
     }
 
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.

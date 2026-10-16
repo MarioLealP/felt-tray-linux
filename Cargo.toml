@@ -23,6 +23,11 @@ edition.workspace = true
 publish.workspace = true
 
 [dependencies]
+# her body's logic (crates/)
+felt-faces = { path = "crates/faces" }
+felt-library = { path = "crates/library" }
+felt-state = { path = "crates/state" }
+
 anyhow = "1.0.104"
 futures-util = { version = "0.3.34", default-features = false }
 getrandom = "0.4"

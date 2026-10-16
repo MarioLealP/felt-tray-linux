@@ -62,10 +62,28 @@ pub struct Body {
     /// Loopback port the overlay's relay listens on.
     #[serde(default = "default_body_port")]
     pub port: u16,
+    /// The overlay's animation library (one folder per tag), e.g. `.../felt-godot-overlay/animations/library`.
+    pub animations: PathBuf,
+    /// Her body's data files (face poses, reactions, games...).
+    #[serde(default = "default_body_data")]
+    pub data_dir: PathBuf,
+    /// Rhubarb Lip Sync (times her mouth to her voice, offline).
+    #[serde(default = "default_rhubarb")]
+    pub rhubarb: Vec<String>,
 }
 
 fn default_body_port() -> u16 {
     8765
+}
+
+fn default_body_data() -> PathBuf {
+    "/usr/share/felt-tray/body".into()
+}
+
+fn default_rhubarb() -> Vec<String> {
+    ["rhubarb", "--recognizer", "phonetic"]
+        .map(String::from)
+        .to_vec()
 }
 
 fn default_agenda_days() -> u32 {

@@ -773,6 +773,9 @@ dependencies = [
 [[package]]
 name = "felt-state"
 version = "0.1.0"
+dependencies = [
+ "tokio",
+]
 
 [[package]]
 name = "felt-tone"
@@ -783,6 +786,9 @@ name = "felt-tray"
 version = "0.4.0"
 dependencies = [
  "anyhow",
+ "felt-faces",
+ "felt-library",
+ "felt-state",
  "futures-util",
  "getrandom 0.4.3",
  "image",

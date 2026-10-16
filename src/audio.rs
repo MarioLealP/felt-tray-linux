@@ -1,6 +1,6 @@
 //! Her voice: WAV clips played one after another by the configured player (default PipeWire's `pw-play -`,
-//! WAV on stdin). A new reply calls
-//! [`Player::stop`] first, which kills the clip that's playing and drops the queue.
+//! WAV on stdin). A new reply calls [`Player::stop`] first, which kills the clip that's playing and drops the
+//! queue. [`Player::play_then`] reports the moment a clip really starts (her body times her mouth to it).
 
 use std::collections::VecDeque;
 use std::process::Stdio;
@@ -9,9 +9,17 @@ use tokio::io::AsyncWriteExt;
 use tokio::process::{Child, Command};
 use tokio::sync::mpsc;
 
+use tokio::sync::oneshot;
+
 enum Cmd {
-    Play(Vec<u8>),
+    Play(Clip),
     Stop,
+}
+
+struct Clip {
+    wav: Vec<u8>,
+    /// Fired when the player process starts on this clip; dropped unfired if the clip is stopped first.
+    started: Option<oneshot::Sender<()>>,
 }
 
 #[derive(Clone)]
@@ -29,8 +37,20 @@ impl Player {
 
     pub fn play(&self, wav: Vec<u8>) {
         if !wav.is_empty() {
-            let _ = self.tx.send(Cmd::Play(wav));
+            let _ = self.tx.send(Cmd::Play(Clip { wav, started: None }));
         }
+    }
+
+    /// Queues `wav`; the receiver resolves when it starts playing, or errs if it never does (stopped, empty).
+    pub fn play_then(&self, wav: Vec<u8>) -> oneshot::Receiver<()> {
+        let (tx, rx) = oneshot::channel();
+        if !wav.is_empty() {
+            let _ = self.tx.send(Cmd::Play(Clip {
+                wav,
+                started: Some(tx),
+            }));
+        }
+        rx
     }
 
     pub fn stop(&self) {
@@ -39,13 +59,18 @@ impl Player {
 }
 
 async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>, command: Vec<String>) {
-    let mut queue: VecDeque<Vec<u8>> = VecDeque::new();
+    let mut queue: VecDeque<Clip> = VecDeque::new();
     let mut current: Option<Child> = None;
     loop {
         if current.is_none()
-            && let Some(wav) = queue.pop_front()
+            && let Some(clip) = queue.pop_front()
         {
-            current = start(&command, wav).await;
+            current = start(&command, clip.wav).await;
+            if current.is_some()
+                && let Some(started) = clip.started
+            {
+                let _ = started.send(());
+            }
         }
         let cmd = match current.as_mut() {
             Some(child) => tokio::select! {
@@ -56,7 +81,7 @@ async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>, command: Vec<String>) {
         };
         match cmd {
             None => break,
-            Some(Cmd::Play(wav)) => queue.push_back(wav),
+            Some(Cmd::Play(clip)) => queue.push_back(clip),
             Some(Cmd::Stop) => {
                 queue.clear();
                 if let Some(mut c) = current.take() {

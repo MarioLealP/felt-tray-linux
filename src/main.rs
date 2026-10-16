@@ -14,6 +14,7 @@ mod notify;
 mod proactive;
 mod screen;
 mod tray;
+mod voice;
 mod window;
 
 use std::sync::Arc;
@@ -84,11 +85,14 @@ fn main() -> Result<()> {
         cfg.felt_core_url.clone(),
         cfg.client_bundle.clone(),
     ));
-    let chat = chat::Chat::new(
-        core.clone(),
-        audio::Player::spawn(cfg.player.clone()),
-        cfg.session_id.clone(),
-    );
+    let player = audio::Player::spawn(cfg.player.clone());
+    // Her body (the Godot overlay): its own thread; the overlay quits when felt-tray does.
+    let body = match &cfg.body {
+        Some(b) => Some(body::start(b, core.clone(), player.clone())?),
+        None => None,
+    };
+    let voice = voice::Voice::new(player, body);
+    let chat = chat::Chat::new(core.clone(), voice.clone(), cfg.session_id.clone());
 
     let event_loop = EventLoopBuilder::<UiEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
@@ -141,13 +145,17 @@ fn main() -> Result<()> {
         });
     }
     let switches = Arc::new(controls::Switches::default());
-    rt.spawn(controls::run(core.clone(), switches.clone(), chat.player()));
+    rt.spawn(controls::run(
+        core.clone(),
+        switches.clone(),
+        voice.player(),
+    ));
     let notifier = rt.block_on(notify::Notifier::connect());
     if cfg.proactive {
         let n = notifier.as_ref().ok().map(|(n, _)| n.clone());
         rt.spawn(proactive::run(
             core.clone(),
-            chat.player(),
+            voice.clone(),
             n,
             switches.clone(),
         ));
@@ -170,7 +178,7 @@ fn main() -> Result<()> {
     if let Some(rx) = windows_rx {
         let screen = screen::Screen {
             core: core.clone(),
-            player: chat.player(),
+            voice: voice.clone(),
             conn: bus_conn.clone(),
             blocklist: cfg.blocklist_path()?,
             sample: Duration::from_secs(cfg.screen_sample_s.max(10)),
@@ -179,12 +187,6 @@ fn main() -> Result<()> {
         };
         rt.spawn(screen.run(rx));
     }
-
-    // Her body: kept alive for the program's life (the overlay quits when felt-tray does).
-    let _body = cfg.body.as_ref().map(|b| {
-        let _rt = rt.enter();
-        body::start(b)
-    });
 
     let setup = WindowSetup {
         app_url: cfg.app_url.parse().context("app_url is not a URL")?,

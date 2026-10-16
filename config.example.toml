@@ -51,4 +51,7 @@ tray_icon = true
 # for no body. KDE Plasma keeps her windows above the others (felt-tray's KWin script).
 # [body]
 # command = ["godot", "--display-driver", "wayland", "--path", "/path/to/felt-godot-overlay"]
+# animations = "/path/to/felt-godot-overlay/animations/library"
 # port = 8765
+# data_dir = "/usr/share/felt-tray/body"
+# rhubarb = ["rhubarb", "--recognizer", "phonetic"]      (times her mouth to her voice; package rhubarb-lip-sync)
