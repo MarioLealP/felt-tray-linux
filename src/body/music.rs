@@ -25,9 +25,12 @@ const BUFFER_S: usize = 12;
 const WINDOW_S: usize = 8;
 const TICK: Duration = Duration::from_secs(1);
 const BEAT_RESEND: Duration = Duration::from_secs(2);
-/// Below this RMS it's silence, not music; this RMS counts as full volume.
-const ENERGY_FLOOR: f64 = 0.01;
-const ENERGY_REFERENCE: f64 = 0.05;
+/// Below this RMS it's silence, not music; this RMS counts as full volume. Calibrated on the Linux desktop
+/// (2026-10-16: Spotify at normal volume through PipeWire's monitor ~0.01 RMS, peaks ~0.05 - Windows' WASAPI
+/// loopback ran hotter, its 0.01 floor called that silence). Only the floor cares about level; the tempo
+/// estimate itself works on ratios.
+const ENERGY_FLOOR: f64 = 0.002;
+const ENERGY_REFERENCE: f64 = 0.02;
 
 type Buffer = Rc<RefCell<VecDeque<f32>>>;
 
@@ -53,7 +56,12 @@ pub async fn run(ctx: Rc<Ctx>, capture: Vec<String>) {
         let energy = rms(&frames);
         let estimate = (energy >= ENERGY_FLOOR)
             .then(|| estimate_tempo_from_audio(&frames, RATE))
-            .flatten();
+            .flatten()
+            .map(|(bpm, confidence)| (fold_octave(bpm), confidence));
+        tracing::debug!(
+            "music: energy {energy:.4}, estimate {estimate:?}, {} s buffered",
+            frames.len() as u32 / RATE
+        );
         let was = lock.locked;
         let locked = lock.update(estimate, None);
         ctx.tempo_locked.set(locked);
@@ -143,6 +151,22 @@ async fn read_samples(out: &mut tokio::process::ChildStdout, buf: &Buffer) {
     }
 }
 
+/// The estimator flips between a tempo and its double/half (live: 86 <-> 171 BPM second to second), which a
+/// 4 % lock never holds through: fold every estimate into one octave. Half-time bobbing to fast music looks right.
+fn fold_octave(mut bpm: f64) -> f64 {
+    const LO: f64 = 75.0;
+    if bpm <= 0.0 {
+        return bpm;
+    }
+    while bpm >= LO * 2.0 {
+        bpm /= 2.0;
+    }
+    while bpm < LO {
+        bpm *= 2.0;
+    }
+    bpm
+}
+
 fn rms(frames: &[f64]) -> f64 {
     if frames.is_empty() {
         return 0.0;
@@ -159,6 +183,15 @@ mod tests {
         assert_eq!(rms(&[]), 0.0);
         assert_eq!(rms(&[0.0; 10]), 0.0);
         assert!((rms(&[0.5, -0.5, 0.5, -0.5]) - 0.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn octave_flips_fold_together() {
+        assert!((fold_octave(171.0) - 85.5).abs() < 1e-9);
+        assert!((fold_octave(86.0) - 86.0).abs() < 1e-9);
+        assert!((fold_octave(60.0) - 120.0).abs() < 1e-9);
+        assert!((fold_octave(149.0) - 149.0).abs() < 1e-9);
+        assert!((fold_octave(150.0) - 75.0).abs() < 1e-9);
     }
 
     #[test]

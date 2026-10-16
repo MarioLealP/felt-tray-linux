@@ -8,6 +8,8 @@ use std::time::Instant;
 pub const BPM_TOLERANCE: f64 = 0.04;
 /// WP-16's own "for >= 5s".
 pub const LOCK_HOLD_S: f64 = 5.0;
+/// How much longer than [`LOCK_HOLD_S`] the window keeps estimates (see `update`).
+const WINDOW_SLACK_S: f64 = 1.5;
 /// estimate_tempo_acf's confidence scale (see its docstring).
 pub const MIN_CONFIDENCE: f64 = 0.15;
 
@@ -89,7 +91,10 @@ impl<F: FnMut() -> f64> TempoLock<F> {
             _ => None,
         };
         self.window.push((now, bpm));
-        let cutoff = now - LOCK_HOLD_S;
+        // A little more history than the hold: with one estimate a second the oldest entry kept by a cutoff of
+        // exactly LOCK_HOLD_S is always a hair under LOCK_HOLD_S old, so `span` never reached it and the lock
+        // never acquired (found live on Linux 2026-10-16; the Python had the same window).
+        let cutoff = now - LOCK_HOLD_S - WINDOW_SLACK_S;
         self.window.retain(|&(t, _)| t >= cutoff);
         let span = self.window[self.window.len() - 1].0 - self.window[0].0;
         let values: Vec<Option<f64>> = self.window.iter().map(|&(_, b)| b).collect();
