@@ -183,6 +183,7 @@ async fn run(
         sentences,
         quiet: Cell::new(false),
         sounds: cfg.sounds.clone(),
+        hushed_at: Cell::new(None),
         last_pick: RefCell::new(HashMap::new()),
         streak: RefCell::new(Vec::new()),
     });

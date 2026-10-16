@@ -52,6 +52,8 @@ pub struct Ctx {
     pub sentences: tokio::sync::mpsc::UnboundedSender<Sentence>,
     /// The Felt app's quiet switch: no spoken lines nobody asked for.
     pub quiet: Cell<bool>,
+    /// Since when the quiet switch has her hushed.
+    pub hushed_at: Cell<Option<Instant>>,
     /// Her recorded lines (`presence/zip_it_1.wav` ...), when configured.
     pub sounds: Option<std::path::PathBuf>,
     /// Per reaction-table key, the last pick (no immediate repeats).

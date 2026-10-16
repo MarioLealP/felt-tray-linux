@@ -19,6 +19,11 @@ pub fn visible(ctx: &Ctx) -> bool {
     p.state == VISIBLE || p.state == ARRIVING
 }
 
+/// Fully back on screen (the walk in has finished).
+pub fn settled_visible(ctx: &Ctx) -> bool {
+    ctx.presence.borrow().state == VISIBLE
+}
+
 pub fn hide(ctx: &Rc<Ctx>) {
     let outcome = ctx.presence.borrow_mut().request_hide();
     tracing::info!("presence: hide ({outcome})");
