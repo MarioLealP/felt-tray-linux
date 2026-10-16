@@ -117,7 +117,10 @@ async fn update(ctx: &Ctx, snap: &Snapshot) {
     let previous = {
         let mut w = ctx.world.borrow_mut();
         if platforms != w.platforms {
-            let ids: Vec<&str> = platforms.iter().map(|p| p.id.as_str()).collect();
+            let ids: Vec<String> = platforms
+                .iter()
+                .map(|p| format!("{} {:.0}-{:.0} @{:.0}", p.id, p.x0, p.x1, p.y))
+                .collect();
             tracing::debug!("world: {} platform(s) - {ids:?}", platforms.len());
         }
         std::mem::replace(&mut w.platforms, platforms)
