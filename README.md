@@ -69,8 +69,14 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   clips); she notices games (KWin's `steam_app_*` windows + games.toml), AFK and GPU heat (amdgpu edge) through
   the reaction table and felt-core's `/v1/react/event`; she bobs to music (`music_capture`: PipeWire's monitor,
   in memory only).
+- **Her world** (KDE): window tops are ledges (KWin's window list with positions, top-most first, and the work
+  areas); she wanders up onto them now and then, sits on edges, drops when one goes; D-Bus `GoToLedge()` sends her
+  to the ledge nearest the cursor. **Outfits** (data/outfits.json: dates, night pyjamas, a daily pick, rare
+  swaps; `tees`: the day's approved tee; state in `$XDG_DATA_HOME/felt-tray/wardrobe.json`). **Face life**
+  (micro-expressions, brow raises on her voice's peaks) and a filler "hmm" 1.5 s into a slow reply. **Calls**
+  (`call_apps`: mic open = on a call): her voice ducks `duck_db` while someone talks.
 - **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down; for her body
-  standing/sitting on windows, outfits, props, call ducking, key-mash. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
+  props, key-mash, mouth-along, accessories. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
 
-Modules: `config` · `core` (felt-core client) · `chat` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`).
+Modules: `config` · `core` (felt-core client) · `chat` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`, `world`, `nav`, `ledge`, `outfits`, `tees`, `face`, `lines`, `call`).
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).
