@@ -1,6 +1,6 @@
 //! A small session-bus API so a desktop shell can be Felt's face without being Felt: `org.clockmost.Felt` at
 //! `/org/clockmost/Felt` - `ShowChat()`, a `Status` property ("checking" / "online" / "offline"), an `Agenda`
-//! property (JSON) for the shell's calendar, and `Windows(json)` / `Cursor(json)` for our own KWin scripts
+//! property (JSON) for the shell's calendar, `GoToLedge()` (her body: onto the ledge nearest the cursor), and `Windows(json)` / `Cursor(json)` for our own KWin scripts
 //! (screen reactions, her gaze; KWin-only callers). The bar's Felt chip uses it; with no such shell, the tray icon does the same job.
 
 use std::sync::atomic::{AtomicU8, Ordering};
@@ -43,6 +43,7 @@ struct FeltBus {
     windows: Option<watch::Sender<Snapshot>>,
     /// The cursor's desktop position from our KWin script (her gaze); None = no body.
     cursor: Option<watch::Sender<Option<(f64, f64)>>>,
+    body: Option<crate::body::Handle>,
 }
 
 /// Only KWin itself (our scripts) may call the methods that feed screen capture and her gaze.
@@ -67,6 +68,13 @@ impl FeltBus {
             .lock()
             .expect("proxy lock")
             .send_event(UiEvent::ShowChat);
+    }
+
+    /// Her body: go to the window ledge nearest the cursor and sit on it (bind it to a shortcut).
+    fn go_to_ledge(&self) {
+        if let Some(b) = &self.body {
+            b.go_to_ledge();
+        }
     }
 
     /// Called by our KWin script only: anyone else is refused (they could steer what gets captured).
@@ -121,6 +129,7 @@ pub async fn serve(
     agenda: SharedAgenda,
     windows: Option<watch::Sender<Snapshot>>,
     cursor: Option<watch::Sender<Option<(f64, f64)>>>,
+    body: Option<crate::body::Handle>,
 ) -> zbus::Result<zbus::Connection> {
     let bus = FeltBus {
         proxy: Mutex::new(proxy),
@@ -128,6 +137,7 @@ pub async fn serve(
         agenda,
         windows,
         cursor,
+        body,
     };
     connection::Builder::session()?
         .name("org.clockmost.Felt")?

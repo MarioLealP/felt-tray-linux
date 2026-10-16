@@ -58,6 +58,8 @@ enum Msg {
     Hidden(bool),
     /// The Felt app's quiet switch.
     Quiet(bool),
+    /// Onto the ledge nearest the cursor, and sit.
+    GoToLedge,
 }
 
 /// felt-tray's side of her body. Cheap to clone; every call returns at once.
@@ -93,6 +95,10 @@ impl Handle {
     /// The hide switch: she walks off screen (true) or comes back (false).
     pub fn set_hidden(&self, hidden: bool) {
         let _ = self.tx.send(Msg::Hidden(hidden));
+    }
+
+    pub fn go_to_ledge(&self) {
+        let _ = self.tx.send(Msg::GoToLedge);
     }
 
     pub fn set_quiet(&self, quiet: bool) {
@@ -223,6 +229,10 @@ async fn run(
             Msg::Hidden(true) => presence::hide(&ctx),
             Msg::Hidden(false) => presence::show(&ctx),
             Msg::Quiet(q) => hush::set(&ctx, q).await,
+            Msg::GoToLedge => {
+                let c = ctx.clone();
+                tokio::task::spawn_local(async move { nav::go_to_ledge(&c).await });
+            }
             Msg::More { text, audio } => speech::more(&ctx, text, audio),
         }
     }

@@ -4,6 +4,7 @@
 //! nearer and lower when sleepy, a little pull toward the cursor.
 
 use std::collections::BTreeMap;
+use std::rc::Rc;
 use std::time::Duration;
 
 use felt_navigation::{Climb, HopDown, Step, Walk};
@@ -72,6 +73,39 @@ fn target_y(ctx: &Ctx, id: &str) -> Option<f64> {
     let y = w.platform(id)?.y;
     w.pending = Some(id.to_owned());
     Some(y)
+}
+
+/// The explicit "go sit on that ledge" (Mario 2026-09-27: "need a way to force her onto a ledge"): the ledge
+/// nearest the cursor she can route to, then she always sits.
+pub async fn go_to_ledge(ctx: &Rc<Ctx>) {
+    let route = {
+        let w = ctx.world.borrow();
+        let Some(current) = w.current.clone() else {
+            tracing::info!("ledge: she isn't anchored yet");
+            return;
+        };
+        let g = moves::geometry(ctx);
+        let her_x = g.world_to_px_x(ctx.current_x.get());
+        let here_y = w.platform(&current).map_or(0.0, |p| p.y);
+        let point = ctx.cursor.get().unwrap_or((her_x, here_y));
+        let ppm = if g.ppm > 0.0 { g.ppm } else { 1.0 };
+        let nav = world::nav_platforms(&w.platforms);
+        felt_navigation::ledges_near(&nav, point, Some(&current), her_width_px(ctx))
+            .into_iter()
+            .find_map(|(ledge, x)| {
+                let plan = felt_navigation::plan_route(&nav, ppm, &current, her_x, &ledge.id, x)?;
+                Some((plan, w.platform(&ledge.id)?.clone()))
+            })
+    };
+    let Some((plan, ledge)) = route else {
+        tracing::info!("ledge: no ledge she can reach near the cursor");
+        return;
+    };
+    tracing::info!("ledge: going to {} ({} steps)", ledge.id, plan.len());
+    if run_plan(ctx, &plan).await {
+        let mood = ctx.mood.borrow().as_dict();
+        super::ledge::maybe_sit(ctx, &ledge, &mood, true).await;
+    }
 }
 
 /// A route from where she stands to a mood-weighted ledge, and that ledge. None when there's nothing wide

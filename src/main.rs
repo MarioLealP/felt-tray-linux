@@ -104,6 +104,7 @@ fn main() -> Result<()> {
         _ => (None, None),
     };
     let with_body = body.is_some();
+    let body_bus = body.clone();
     let voice = voice::Voice::new(player, body);
     let chat = chat::Chat::new(core.clone(), voice.clone(), cfg.session_id.clone());
 
@@ -118,6 +119,7 @@ fn main() -> Result<()> {
             agenda.clone(),
             windows_tx,
             cursor_tx,
+            body_bus,
         ))
         .context("can't claim org.clockmost.Felt on the session bus (already running?)")?;
     let tray = if cfg.tray_icon {
