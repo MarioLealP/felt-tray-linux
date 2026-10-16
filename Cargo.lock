@@ -836,6 +836,7 @@ dependencies = [
  "felt-sounds",
  "felt-state",
  "felt-tone",
+ "felt-window-events",
  "felt-world",
  "futures-util",
  "getrandom 0.4.3",

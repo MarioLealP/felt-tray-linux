@@ -44,6 +44,7 @@ felt-reaction-table = { path = "crates/reaction-table" }
 felt-sounds = { path = "crates/sounds" }
 felt-state = { path = "crates/state" }
 felt-tone = { path = "crates/tone" }
+felt-window-events = { path = "crates/window-events" }
 felt-world = { path = "crates/world" }
 
 anyhow = "1.0.104"

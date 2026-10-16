@@ -13,8 +13,8 @@ use serde_json::Value;
 use tokio::sync::broadcast::error::RecvError;
 
 use super::ctx::Ctx;
-use super::moves;
 use super::overlay::Event;
+use super::{moves, window_events};
 use crate::screen::kwin::Snapshot;
 
 const TICK: Duration = Duration::from_millis(250);
@@ -31,6 +31,11 @@ pub struct World {
     /// The ledge she's sitting on, and the timer that stands her up again.
     pub seated_on: Option<String>,
     pub sit_timer: Option<tokio::task::JoinHandle<()>>,
+    /// Last tick's windows (top-most first) and monitors, for riding and fall causes.
+    windows: Vec<Win>,
+    monitors: Vec<Monitor>,
+    /// Why the fall in flight started (her ledge went), reacted to on landing.
+    fall_cause: Option<&'static str>,
     /// KWin window id -> the number felt-world calls it.
     ids: HashMap<String, i64>,
 }
@@ -71,7 +76,7 @@ pub async fn run(ctx: Rc<Ctx>, windows: super::Windows) {
     }
 }
 
-async fn update(ctx: &Ctx, snap: &Snapshot) {
+async fn update(ctx: &Rc<Ctx>, snap: &Snapshot) {
     let g = moves::geometry(ctx);
     // only the monitors she has a view on (her own overlay windows aren't in the list: they skip the taskbar)
     let monitors: Vec<Monitor> = snap
@@ -112,10 +117,21 @@ async fn update(ctx: &Ctx, snap: &Snapshot) {
                 title: String::new(),
             })
             .collect();
-        felt_world::compute_platforms(&wins, &monitors, her_height_px(ctx), &[])
+        let platforms = felt_world::compute_platforms(&wins, &monitors, her_height_px(ctx), &[]);
+        (platforms, wins)
     };
+    let (platforms, wins) = platforms;
+    if ride(ctx, &wins).await {
+        let mut w = ctx.world.borrow_mut();
+        w.platforms = platforms;
+        w.windows = wins;
+        w.monitors = monitors;
+        return; // riding is not a fall
+    }
     let previous = {
         let mut w = ctx.world.borrow_mut();
+        w.windows = wins;
+        w.monitors = monitors;
         if platforms != w.platforms {
             let ids: Vec<String> = platforms
                 .iter()
@@ -126,6 +142,33 @@ async fn update(ctx: &Ctx, snap: &Snapshot) {
         std::mem::replace(&mut w.platforms, platforms)
     };
     keep_supported(ctx, &previous).await;
+}
+
+/// The window she stands on moved (dragged): she moves with it (`shift`). True if she rode this tick.
+async fn ride(ctx: &Ctx, now: &[Win]) -> bool {
+    if ctx.behavior.base_busy() {
+        return false;
+    }
+    let g = moves::geometry(ctx);
+    let her_x = g.world_to_px_x(ctx.current_x.get());
+    let r = {
+        let w = ctx.world.borrow();
+        let current = w.current.as_deref().and_then(|id| w.platform(id));
+        window_events::ride(current, &w.windows, now, her_x)
+    };
+    let Some((dx, top)) = r else {
+        return false;
+    };
+    if !ctx
+        .overlay
+        .send(&serde_json::json!({ "shift": { "dx_px": dx, "y_px": top } }))
+        .await
+    {
+        return false;
+    }
+    ctx.current_x.set(g.px_to_world_x(her_x + dx));
+    tracing::debug!("world: riding a window (dx {dx:.0} px)");
+    true
 }
 
 /// "Never floating": her platform vanished, or moved out from under her.
@@ -170,6 +213,9 @@ async fn keep_supported(ctx: &Ctx, previous: &[Platform]) {
             return; // already falling there
         }
         tracing::info!("world: her ledge went - falling to {}", target.id);
+        if let Some(last) = previous.iter().find(|p| p.id == current) {
+            w.fall_cause = Some(window_events::fall_cause(last, &w.windows, &w.monitors));
+        }
         w.pending = Some(target.id);
         target.y
     };
@@ -178,10 +224,15 @@ async fn keep_supported(ctx: &Ctx, previous: &[Platform]) {
 
 /// main.gd's `landed` / `climbed` commit the pending platform; an unprompted `seated: false` means the ledge
 /// she sat on went (main.gd already stood her up).
-fn settled(ctx: &Ctx, m: &Value) {
+fn settled(ctx: &Rc<Ctx>, m: &Value) {
     let mut w = ctx.world.borrow_mut();
     if (m.get("landed").is_some() || m.get("climbed").is_some()) && w.pending.is_some() {
         w.current = w.pending.take();
+    }
+    if m.get("landed").is_some()
+        && let Some(cause) = w.fall_cause.take()
+    {
+        tokio::task::spawn_local(window_events::react_to_landing(ctx.clone(), cause));
     }
     if m.get("seated").and_then(Value::as_bool) == Some(false) && w.seated_on.is_some() {
         tracing::info!("ledge: her seat went - unseated");

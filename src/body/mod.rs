@@ -27,6 +27,7 @@ mod reply;
 mod signals;
 mod speech;
 mod tees;
+mod window_events;
 mod world;
 
 use std::cell::{Cell, RefCell};
@@ -204,6 +205,7 @@ async fn run(
         world: RefCell::new(world::World::default()),
         outfits,
         face_held_until: Cell::new(Instant::now()),
+        grumbles: window_events::Grumbles::default(),
         filler: RefCell::new(None),
         tees: cfg.tees.clone(),
         wardrobe_path,
