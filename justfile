@@ -3,8 +3,9 @@
 default:
     @just --list
 
-# format + lint + test + supply chain, same as CI
-check: fmt-check lint test deny shear
+# exactly what the pkgs CI scan runs, plus the tests
+check:
+    ./ci-check.sh
 
 fmt:
     cargo fmt
@@ -20,9 +21,6 @@ test:
 
 deny:
     cargo deny check
-
-shear:
-    cargo shear
 
 cov:
     cargo llvm-cov nextest --html
