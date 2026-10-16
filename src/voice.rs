@@ -27,9 +27,17 @@ impl Voice {
     }
 
     /// The first (or only) sentence of a reply. `tag`/`emotion`: felt-core's animation tag and emotion.
-    pub fn say(&self, text: &str, audio: Vec<u8>, tag: Option<String>, emotion: Option<String>) {
+    /// `prompted`: you asked for it (chat), not one of her own lines or a screen reaction.
+    pub fn say(
+        &self,
+        text: &str,
+        audio: Vec<u8>,
+        tag: Option<String>,
+        emotion: Option<String>,
+        prompted: bool,
+    ) {
         match &self.body {
-            Some(b) => b.reply(text, audio, tag, emotion),
+            Some(b) => b.reply(text, audio, tag, emotion, prompted),
             None => self.player.play(audio),
         }
     }

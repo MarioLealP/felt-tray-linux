@@ -43,7 +43,7 @@ impl Chat {
             return Ok(()); // a newer line went out while this one was waiting
         }
         self.voice
-            .say(&reply.text, reply.audio, reply.tag, reply.emotion);
+            .say(&reply.text, reply.audio, reply.tag, reply.emotion, true);
         if let Some((id, total)) = reply.stream {
             let this = Arc::clone(self);
             tokio::spawn(async move { this.stream_rest(&id, total, token).await });

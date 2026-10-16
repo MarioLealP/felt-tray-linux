@@ -62,7 +62,7 @@ pub async fn run(
                     item.kind,
                     item.text.len()
                 );
-                voice.say(&item.text, audio, None, None);
+                voice.say(&item.text, audio, None, None, false);
             }
             other => {
                 if let Err(e) = other {

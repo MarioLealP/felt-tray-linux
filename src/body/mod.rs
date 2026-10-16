@@ -35,6 +35,7 @@ enum Msg {
         audio: Vec<u8>,
         tag: Option<String>,
         emotion: Option<String>,
+        prompted: bool,
     },
     /// A later sentence of the same reply (streamed).
     More { text: String, audio: Vec<u8> },
@@ -52,13 +53,21 @@ impl Handle {
     }
 
     /// She says `text` (the WAV) with a reaction; `tag` is felt-core's animation tag, `emotion` its emotion.
-    pub fn reply(&self, text: &str, audio: Vec<u8>, tag: Option<String>, emotion: Option<String>) {
+    pub fn reply(
+        &self,
+        text: &str,
+        audio: Vec<u8>,
+        tag: Option<String>,
+        emotion: Option<String>,
+        prompted: bool,
+    ) {
         let text = text.to_owned();
         let _ = self.tx.send(Msg::Reply {
             text,
             audio,
             tag,
             emotion,
+            prompted,
         });
     }
 
@@ -125,10 +134,11 @@ async fn run(
                 audio,
                 tag,
                 emotion,
+                prompted,
             } => {
                 let generation = ctx.next_generation();
                 ctx.bubble.replace(text.clone());
-                let reaction = Some(reply::begin(&ctx, &text, tag, emotion));
+                let reaction = Some(reply::begin(&ctx, &text, tag, emotion, prompted));
                 let _ = sentences.send(Sentence {
                     generation,
                     text,

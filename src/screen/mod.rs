@@ -141,7 +141,7 @@ impl Screen {
                     reply.text.len()
                 );
                 self.voice
-                    .say(&reply.text, reply.audio, reply.tag, reply.emotion);
+                    .say(&reply.text, reply.audio, reply.tag, reply.emotion, false);
             }
             Ok(None) => tracing::info!("screen: no reaction this time (503)"),
             Err(e) => tracing::warn!("screen: sending to felt-core failed: {e:#}"),
