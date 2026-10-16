@@ -109,16 +109,22 @@ fn x_overlap(a: &Platform, b: &Platform) -> Option<(f64, f64)> {
     (hi > lo).then_some((lo, hi))
 }
 
-/// The smallest clip (1 or 2 m) whose reach covers `rise_px`, or None if
-/// it's more than a 2 m step (or `ppm` is unusable).
+/// The clip (1 or 2 m) nearest to `rise_px`, or None if it's more than a 2 m step (or `ppm` is unusable).
+/// Nearest, not "smallest that covers it": a 1.06 m ledge took the 2 m clip, which climbs a metre too high and
+/// then snaps her down onto the ledge (Linux, 2026-10-16) - overshooting by half a metre at most reads better.
 fn climb_meters_for_rise(rise_px: f64, ppm: f64) -> Option<u32> {
     if ppm <= 0.0 {
         return None;
     }
     let rise_m = rise_px / ppm;
-    CLIMB_METERS
-        .into_iter()
-        .find(|&meters| rise_m <= f64::from(meters) * CLIMB_TOLERANCE)
+    if rise_m > f64::from(CLIMB_METERS[1]) * CLIMB_TOLERANCE {
+        return None;
+    }
+    Some(if rise_m <= 1.5 {
+        CLIMB_METERS[0]
+    } else {
+        CLIMB_METERS[1]
+    })
 }
 
 fn build_edges(platforms: &[Platform], ppm: f64) -> HashMap<String, Vec<Edge>> {

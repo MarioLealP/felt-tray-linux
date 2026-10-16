@@ -208,7 +208,8 @@ fn test_too_high_but_reachable_via_a_climbable_intermediate_platform() {
     let to_platforms: Vec<&str> = climbs.iter().map(|c| c.to_platform.as_str()).collect();
     assert_eq!(to_platforms, ["win:1:0", "win:2:0"]);
     let meters: Vec<u32> = climbs.iter().map(|c| c.meters).collect();
-    assert_eq!(meters, [2, 2]);
+    // nearest clip: 1.29 m -> the 1 m climb, 1.59 m -> the 2 m one (was "smallest that covers": [2, 2])
+    assert_eq!(meters, [1, 2]);
 }
 
 #[test]

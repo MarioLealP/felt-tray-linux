@@ -115,7 +115,7 @@ async fn update(ctx: &Rc<Ctx>, snap: &Snapshot) {
                     f64::from(win.x) + f64::from(win.w),
                     f64::from(win.y) + f64::from(win.h),
                 ),
-                title: String::new(),
+                title: win.app.clone(), // for the debug log only
             })
             .collect();
         let platforms = felt_world::compute_platforms(&wins, &monitors, her_height_px(ctx), &[]);
@@ -139,6 +139,12 @@ async fn update(ctx: &Rc<Ctx>, snap: &Snapshot) {
                 .map(|p| format!("{} {:.0}-{:.0} @{:.0}", p.id, p.x0, p.x1, p.y))
                 .collect();
             tracing::debug!("world: {} platform(s) - {ids:?}", platforms.len());
+            let wins: Vec<String> = w
+                .windows
+                .iter()
+                .map(|x| format!("{} {:?}", x.title, x.rect))
+                .collect();
+            tracing::trace!("world: from windows {wins:?}");
         }
         std::mem::replace(&mut w.platforms, platforms)
     };
