@@ -3,6 +3,7 @@
 //! another monitor), sitting down / standing up, a surprise. Weighted by the hour (sleepier late at night) and
 //! her mood (bored -> wanders more, low energy -> sits and dozes). Nothing while she's busy.
 
+use std::collections::BTreeMap;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -13,6 +14,7 @@ use super::clock;
 use super::ctx::{CLIP_TIMEOUT_S, Ctx};
 use super::moves::{self, RUN_TAG, SITTING_IDLE, WALK_TAG};
 use super::presence;
+use super::{ledge, nav};
 
 /// How far from a monitor's middle an ambient walk goes (world m), and how often it crosses monitors.
 const ROAM_REACH_M: f64 = 2.0;
@@ -61,12 +63,28 @@ pub async fn run(ctx: Rc<Ctx>) {
             {
                 w.push(("dance", 15.0));
             }
-            standing(&ctx, pick(&w)).await;
+            standing(&ctx, pick(&w), &mood).await;
         }
     }
 }
 
-async fn standing(ctx: &Ctx, action: &str) {
+/// Usually a floor wander; sometimes (WP-23) up onto a window's ledge, where she may sit a while.
+async fn walk(ctx: &Rc<Ctx>, mood: &BTreeMap<String, f64>) {
+    if rand::rng().random_bool(nav::PLATFORM_ROAM_CHANCE)
+        && let Some((plan, ledge)) = nav::plan_ledge_walk(ctx, mood)
+    {
+        tracing::info!("ambient: to the ledge {} ({} steps)", ledge.id, plan.len());
+        if nav::run_plan(ctx, &plan).await {
+            ledge::maybe_sit(ctx, &ledge, mood, false).await;
+        }
+        return;
+    }
+    let run = ctx.assets.tags.contains(RUN_TAG) && rand::rng().random_bool(0.3);
+    let x = wander_target(ctx);
+    moves::walk_to(ctx, x, if run { RUN_TAG } else { WALK_TAG }, false).await;
+}
+
+async fn standing(ctx: &Rc<Ctx>, action: &str, mood: &BTreeMap<String, f64>) {
     tracing::debug!("ambient: {action}");
     match action {
         "idle_variety" => {
@@ -74,11 +92,7 @@ async fn standing(ctx: &Ctx, action: &str) {
         }
         "ambient_action" => play_one_of(ctx, &tags_under(ctx, "ambient")).await,
         "sleepy" => play_one_of(ctx, &tags_under(ctx, "sleepy")).await,
-        "walk" if ctx.assets.tags.contains(WALK_TAG) => {
-            let run = ctx.assets.tags.contains(RUN_TAG) && rand::rng().random_bool(0.3);
-            let x = wander_target(ctx);
-            moves::walk_to(ctx, x, if run { RUN_TAG } else { WALK_TAG }, false).await;
-        }
+        "walk" if ctx.assets.tags.contains(WALK_TAG) => walk(ctx, mood).await,
         "sit_down" => {
             moves::sit_down(ctx).await;
         }

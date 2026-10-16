@@ -52,6 +52,10 @@ pub struct Ctx {
     pub sentences: tokio::sync::mpsc::UnboundedSender<Sentence>,
     /// The Felt app's quiet switch: no spoken lines nobody asked for.
     pub quiet: Cell<bool>,
+    /// Her world: the platforms, where she stands, the ledge she sits on (world.rs).
+    pub world: RefCell<super::world::World>,
+    /// The cursor's desktop position, as gaze last saw it.
+    pub cursor: Cell<Option<(f64, f64)>>,
     /// A steady beat is playing (music.rs): she may dance.
     pub tempo_locked: Cell<bool>,
     /// Since when the quiet switch has her hushed.

@@ -10,16 +10,19 @@ mod ctx;
 mod events;
 mod gaze;
 mod hush;
+mod ledge;
 mod lipsync;
 mod mood;
 mod moves;
 mod music;
+mod nav;
 mod overlay;
 mod presence;
 mod react;
 mod reply;
 mod signals;
 mod speech;
+mod world;
 
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -186,6 +189,8 @@ async fn run(
         sounds: cfg.sounds.clone(),
         hushed_at: Cell::new(None),
         tempo_locked: Cell::new(false),
+        world: RefCell::new(world::World::default()),
+        cursor: Cell::new(None),
         last_pick: RefCell::new(HashMap::new()),
         streak: RefCell::new(Vec::new()),
     });
@@ -193,6 +198,7 @@ async fn run(
     tokio::task::spawn_local(ambient::idle_refresh(ctx.clone()));
     tokio::task::spawn_local(ambient::run(ctx.clone()));
     tokio::task::spawn_local(gaze::run(ctx.clone(), cursor));
+    tokio::task::spawn_local(world::run(ctx.clone(), windows.clone()));
     tokio::task::spawn_local(signals::run(ctx.clone(), windows, cfg.data_dir.clone()));
     if !cfg.music_capture.is_empty() {
         tokio::task::spawn_local(music::run(ctx.clone(), cfg.music_capture.clone()));

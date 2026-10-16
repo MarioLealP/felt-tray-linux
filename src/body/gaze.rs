@@ -26,7 +26,10 @@ pub async fn run(ctx: Rc<Ctx>, mut cursor: Cursor) {
         tokio::select! {
             _ = tick.tick() => {}
             r = cursor.changed(), if cursor_open => match r {
-                Ok(()) => moved_at = Instant::now(),
+                Ok(()) => {
+                    moved_at = Instant::now();
+                    ctx.cursor.set(*cursor.borrow());
+                }
                 Err(_) => cursor_open = false,
             },
             e = events.recv() => match e {

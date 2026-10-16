@@ -1,8 +1,8 @@
 // felt-tray's KWin script (loaded whenever felt-tray runs on KWin): keeps her overlay windows above, and tells
-// felt-tray which windows
-// are visible and which is active, on every change that matters for the capture policy - including title
-// changes, so a tab switching to a bank page is seen before the next capture. felt-tray only accepts these
-// calls from KWin itself.
+// felt-tray which windows are visible (top-most first, with where they are) and which is active, plus each
+// monitor's work area - on every change that matters for the capture policy (including title changes, so a
+// tab switching to a bank page is seen before the next capture) and for her body (windows moving, restacking:
+// their tops are where she can stand). At most every 100 ms. felt-tray only accepts these calls from KWin.
 
 function onCurrentDesktop(w) {
     return w.onAllDesktops || w.desktops.some(d => d.id === workspace.currentDesktop.id);
@@ -19,19 +19,44 @@ function info(w) {
         desktop_file: w.desktopFileName || "",
         title: w.caption || "",
         pid: w.pid || 0,
+        x: Math.round(w.frameGeometry.x),
+        y: Math.round(w.frameGeometry.y),
         w: Math.round(w.frameGeometry.width),
         h: Math.round(w.frameGeometry.height),
         fullscreen: w.fullScreen,
     };
 }
 
-function send() {
+function screen(s) {
+    const g = s.geometry;
+    const work = workspace.clientArea(KWin.MaximizeArea, s, workspace.currentDesktop);
+    return {
+        x: Math.round(g.x), y: Math.round(g.y), w: Math.round(g.width), h: Math.round(g.height),
+        work_bottom: Math.round(work.y + work.height),
+    };
+}
+
+function sendNow() {
     const a = workspace.activeWindow;
     const data = {
         active: a ? a.internalId.toString() : "",
-        windows: workspace.windowList().filter(visible).map(info),
+        // stackingOrder is bottom-first (a list, not a JS array); her world wants the top-most first
+        windows: Array.from(workspace.stackingOrder).filter(visible).reverse().map(info),
+        screens: Array.from(workspace.screens).map(screen),
     };
     callDBus("org.clockmost.Felt", "/org/clockmost/Felt", "org.clockmost.Felt", "Windows", JSON.stringify(data));
+}
+
+// Coalesce bursts (a window being dragged changes geometry every frame) into one send per 100 ms.
+const pending = new QTimer();
+pending.singleShot = true;
+pending.interval = 100;
+pending.timeout.connect(sendNow);
+
+function send() {
+    if (!pending.active) {
+        pending.start();
+    }
 }
 
 function watch(w) {
@@ -39,6 +64,7 @@ function watch(w) {
     w.minimizedChanged.connect(send);
     w.fullScreenChanged.connect(send);
     w.desktopsChanged.connect(send);
+    w.frameGeometryChanged.connect(send);
 }
 
 // Her Godot overlay windows: Wayland ignores a client's own always-on-top, so KWin keeps them above, out of
@@ -79,6 +105,7 @@ function overlay(w) {
 workspace.windowList().forEach(w => { overlay(w); watch(w); });
 workspace.windowAdded.connect(w => { overlay(w); watch(w); send(); });
 workspace.windowRemoved.connect(w => { overlays.delete(w.internalId.toString()); send(); });
-workspace.windowActivated.connect(send);
+workspace.windowActivated.connect(send); // activating is what raises a window (KWin 6 has no restack signal)
 workspace.currentDesktopChanged.connect(send);
+workspace.screensChanged.connect(send);
 send();

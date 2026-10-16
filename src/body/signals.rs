@@ -137,6 +137,7 @@ mod tests {
         let manual: HashSet<String> = ["factorio.exe".to_owned()].into();
         let snap = Snapshot {
             active: String::new(),
+            screens: Vec::new(),
             windows: vec![
                 win("steam_app_4732690", "Endfield"),
                 win("factorio", "Factorio 2.0.55"),

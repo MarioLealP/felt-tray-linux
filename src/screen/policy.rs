@@ -24,6 +24,11 @@ pub struct WindowInfo {
     pub title: String,
     #[serde(default)]
     pub pid: u32,
+    /// Top-left corner, desktop px.
+    #[serde(default)]
+    pub x: i32,
+    #[serde(default)]
+    pub y: i32,
     #[serde(default)]
     pub w: u32,
     #[serde(default)]

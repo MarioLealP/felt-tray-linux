@@ -31,6 +31,7 @@ pub async fn walk_to(ctx: &Ctx, x: f64, cycle_tag: &str, offscreen: bool) {
 }
 
 pub async fn stand_up_if_sitting(ctx: &Ctx) {
+    super::ledge::stand_up(ctx).await; // a ledge sit first (main.gd pins her hips there)
     if !ctx.behavior.sitting() {
         return;
     }

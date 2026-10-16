@@ -73,4 +73,46 @@ impl Overlay {
         self.send(&json!({ "bubble": { "text": text, "seconds": seconds } }))
             .await
     }
+
+    /// Her feet go to this desktop-px height (main.gd falls her there and sends `landed`).
+    pub async fn support(&self, y_px: f64) -> bool {
+        self.send(&json!({ "support": { "y_px": y_px } })).await
+    }
+
+    /// Steps off and falls to the platform at `y_px`; the `landed` payload, or None (timeout / overlay down).
+    pub async fn hop(&self, y_px: f64, timeout: Duration) -> Option<Value> {
+        let m = json!({ "hop": { "y_px": y_px } });
+        self.send_and_wait(&m, "landed", timeout).await
+    }
+
+    /// Climbs up to `y_px` (`meters`: the 1 or 2 m clip); the `climbed` payload, or None.
+    pub async fn climb(&self, y_px: f64, meters: u32, timeout: Duration) -> Option<Value> {
+        let m = json!({ "climb": { "y_px": y_px, "meters": meters } });
+        self.send_and_wait(&m, "climbed", timeout).await
+    }
+
+    /// Sits her on the ledge at `y_px` (hips pinned there); true once main.gd says she's seated.
+    pub async fn ledge_sit(&self, y_px: f64, timeout: Duration) -> bool {
+        let m = json!({ "ledge_sit": { "y_px": y_px } });
+        let seated = self.send_and_wait(&m, "seated", timeout).await;
+        seated.and_then(|v| v.as_bool()) == Some(true)
+    }
+
+    pub async fn ledge_stand(&self, timeout: Duration) {
+        self.send_and_wait(&json!({ "ledge_stand": {} }), "seated", timeout)
+            .await;
+    }
+
+    /// Sends `msg` and waits for main.gd's next message carrying `key`; that value, or None.
+    async fn send_and_wait(&self, msg: &Value, key: &str, timeout: Duration) -> Option<Value> {
+        let mut rx = self.subscribe();
+        if !self.send(msg).await {
+            return None;
+        }
+        let m = wait_for(&mut rx, timeout, |m| m.get(key).is_some()).await;
+        if m.is_none() {
+            tracing::warn!("no '{key}' notice within {timeout:?} - continuing");
+        }
+        m.and_then(|m| m.get(key).cloned())
+    }
 }

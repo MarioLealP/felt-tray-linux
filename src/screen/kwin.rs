@@ -23,7 +23,20 @@ const SCRIPT: &str = include_str!("kwin_script.js");
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct Snapshot {
     pub active: String,
+    /// Top-most first.
     pub windows: Vec<WindowInfo>,
+    #[serde(default)]
+    pub screens: Vec<Screen>,
+}
+
+/// One monitor, desktop px; `work_bottom` is where the work area ends (above a bottom panel).
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct Screen {
+    pub x: i32,
+    pub y: i32,
+    pub w: u32,
+    pub h: u32,
+    pub work_bottom: i32,
 }
 
 async fn scripting<B>(conn: &Connection, method: &str, body: &B) -> Result<zbus::Message>

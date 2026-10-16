@@ -31,14 +31,17 @@ felt-games = { path = "crates/games" }
 felt-gaze = { path = "crates/gaze" }
 felt-geometry = { path = "crates/geometry" }
 felt-gpu = { path = "crates/gpu" }
+felt-ledge-sit = { path = "crates/ledge-sit" }
 felt-library = { path = "crates/library" }
 felt-mood = { path = "crates/mood" }
 felt-music-events = { path = "crates/music-events" }
+felt-navigation = { path = "crates/navigation" }
 felt-presence = { path = "crates/presence" }
 felt-reaction-table = { path = "crates/reaction-table" }
 felt-sounds = { path = "crates/sounds" }
 felt-state = { path = "crates/state" }
 felt-tone = { path = "crates/tone" }
+felt-world = { path = "crates/world" }
 
 anyhow = "1.0.104"
 futures-util = { version = "0.3.34", default-features = false }
