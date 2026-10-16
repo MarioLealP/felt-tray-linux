@@ -1,7 +1,8 @@
 # felt-tray
 
 Felt on a Linux desktop: the chat window (your Felt server's hosted app in a web view, created on open and destroyed
-on close), her voice for typed replies, her alert lines as desktop notifications, and a tray icon - or, for a
+on close), her voice for typed replies, her alert lines as desktop notifications, her body (the Godot overlay that
+draws her, optional), and a tray icon - or, for a
 desktop shell with its own Felt button, a D-Bus API instead. Works under any desktop with a StatusNotifierItem host
 (Plasma, waybar, GNOME + AppIndicator, ...). Part of clockmost: it talks to a clockmost Felt server (`felt-core`).
 
@@ -49,12 +50,22 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   (KWin ScreenShot2, granted by `org.clockmost.felt-tray.desktop`), drops near-duplicates (dHash), and sends it to
   felt-core; she speaks the reaction. Skipped after 10 min idle. The decision log line never contains a rejected
   window's title. The `Windows` D-Bus method only accepts calls from KWin itself.
+- **Her body** (a `[body]` table: the overlay command + its animation library; needs `godot` and
+  `rhubarb-lip-sync`): felt-tray launches the felt-godot-overlay project and drives it over a loopback socket (a
+  fresh secret on its stdin each launch; it quits with felt-tray; relaunched with backoff if it dies). It runs on
+  its own single-threaded thread (`src/body/`, the logic is the `felt-*` crates in `crates/`): she thinks while a
+  line is out; each sentence gets Rhubarb mouth cues that go out the moment its audio really starts; the first
+  brings a gesture (felt-core's tag, else felt-llm's pick for your own lines, else her talking gesture) and a face;
+  her eyes follow the mouse (KDE: our `felt-tray-cursor` KWin script), look at you while she talks; her mood
+  drifts, sets her resting face (`$XDG_DATA_HOME/felt-tray/mood.json`) and goes to felt-core's diary with her
+  other events. On KDE a fullscreen game hides even keep-above windows on its monitor: give the overlay
+  `-- --home-screen=right --only-home-screen` to keep her on one monitor.
 - **D-Bus API** (`org.clockmost.Felt` at `/org/clockmost/Felt`): `ShowChat()`, a `Status` property
   ("checking" / "online" / "offline") and an `Agenda` property: the next `agenda_days` of her calendar as JSON
   (felt-core `/v1/calendar/upcoming`, refreshed every 5 min) for a shell's calendar - she reminds, it only shows. With `tray_icon = false` a shell's own button uses it instead of the icon
   (clockmost-shell's Felt chip does).
-- **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down, her body (the
-  overlay), the music/proactive watchers. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
+- **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down; for her body
+  the ambient/world/music/signal loops, props, outfits, hush and presence (in progress). Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
 
-Modules: `config` · `core` (felt-core client) · `chat` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls`.
+Modules: `config` · `core` (felt-core client) · `chat` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`).
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).
