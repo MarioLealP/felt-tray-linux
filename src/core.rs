@@ -276,6 +276,38 @@ impl FeltCore {
             .map(str::to_owned))
     }
 
+    /// A desktop event (a game started, back from AFK, ...) -> her spoken line, or None when felt-core keeps
+    /// her quiet (its cooldowns and minimum durations decide; an empty body + X-Reaction-Skipped).
+    pub async fn react_event(
+        &self,
+        event: &str,
+        details: &serde_json::Value,
+        tone: &str,
+    ) -> Result<Option<Reply>> {
+        let r = self
+            .client()?
+            .post(format!("{}/v1/react/event", self.base))
+            .json(&json!({ "event": event, "details": details, "tone": tone }))
+            .send()
+            .await?
+            .error_for_status()?;
+        let h = r.headers();
+        let text = header(h, "X-Reply-Text").unwrap_or_default();
+        let (tag, emotion) = (header(h, "X-Animation-Tag"), header(h, "X-Emotion"));
+        if text.is_empty() && tag.is_none() {
+            let why = header(h, "X-Reaction-Skipped").unwrap_or_else(|| "?".into());
+            tracing::info!("react/event {event}: no line ({why})");
+            return Ok(None);
+        }
+        Ok(Some(Reply {
+            text,
+            stream: None,
+            tag,
+            emotion,
+            audio: r.bytes().await?.to_vec(),
+        }))
+    }
+
     /// One diary event (her body's notices); 204 = taken, 404 = a felt-core without `/v1/events`.
     pub async fn report_event(
         &self,

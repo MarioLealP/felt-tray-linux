@@ -86,17 +86,22 @@ fn main() -> Result<()> {
         cfg.client_bundle.clone(),
     ));
     let player = audio::Player::spawn(cfg.player.clone());
+    // KWin's window list: screen reactions and her body (games, later her world) both read it.
+    let (windows_tx, windows_rx) = if cfg.screen_reactions || cfg.body.is_some() {
+        let (tx, rx) = tokio::sync::watch::channel(screen::kwin::Snapshot::default());
+        (Some(tx), Some(rx))
+    } else {
+        (None, None)
+    };
     // Her body (the Godot overlay): its own thread; the overlay quits when felt-tray does. It follows the
     // cursor our KWin script reports over D-Bus.
-    let (cursor_tx, body) = match &cfg.body {
-        Some(b) => {
+    let (cursor_tx, body) = match (&cfg.body, &windows_rx) {
+        (Some(b), Some(w)) => {
             let (tx, rx) = tokio::sync::watch::channel(None);
-            (
-                Some(tx),
-                Some(body::start(b, core.clone(), player.clone(), rx)?),
-            )
+            let handle = body::start(b, core.clone(), player.clone(), rx, w.clone())?;
+            (Some(tx), Some(handle))
         }
-        None => (None, None),
+        _ => (None, None),
     };
     let with_body = body.is_some();
     let voice = voice::Voice::new(player, body);
@@ -105,12 +110,6 @@ fn main() -> Result<()> {
     let event_loop = EventLoopBuilder::<UiEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
     let status = Arc::new(bus::SharedStatus::default());
-    let (windows_tx, windows_rx) = if cfg.screen_reactions {
-        let (tx, rx) = tokio::sync::watch::channel(screen::kwin::Snapshot::default());
-        (Some(tx), Some(rx))
-    } else {
-        (None, None)
-    };
     let agenda: bus::SharedAgenda = Arc::new(std::sync::Mutex::new("[]".into()));
     let bus_conn = rt
         .block_on(bus::serve(
@@ -185,7 +184,9 @@ fn main() -> Result<()> {
             "no KWin cursor feed (not on KDE?) - her eyes won't follow the mouse: {e:#}"
         );
     }
-    if let Some(rx) = windows_rx {
+    if cfg.screen_reactions
+        && let Some(rx) = windows_rx
+    {
         let screen = screen::Screen {
             core: core.clone(),
             voice: voice.clone(),

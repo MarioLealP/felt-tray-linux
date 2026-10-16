@@ -14,10 +14,13 @@ mod mood;
 mod moves;
 mod overlay;
 mod presence;
+mod react;
 mod reply;
+mod signals;
 mod speech;
 
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Instant;
@@ -32,7 +35,6 @@ use crate::core::FeltCore;
 use assets::Assets;
 use ctx::{CLIP_TIMEOUT_S, Ctx};
 use overlay::{Event, Overlay, Rig};
-use speech::Sentence;
 
 enum Msg {
     /// A line went to felt-core: she thinks until the reply comes.
@@ -49,6 +51,8 @@ enum Msg {
     More { text: String, audio: Vec<u8> },
     /// The Felt app's hide switch.
     Hidden(bool),
+    /// The Felt app's quiet switch.
+    Quiet(bool),
 }
 
 /// felt-tray's side of her body. Cheap to clone; every call returns at once.
@@ -86,6 +90,10 @@ impl Handle {
         let _ = self.tx.send(Msg::Hidden(hidden));
     }
 
+    pub fn set_quiet(&self, quiet: bool) {
+        let _ = self.tx.send(Msg::Quiet(quiet));
+    }
+
     pub fn more(&self, text: &str, audio: Vec<u8>) {
         let text = text.to_owned();
         let _ = self.tx.send(Msg::More { text, audio });
@@ -107,11 +115,15 @@ pub async fn unload_cursor_script(conn: &zbus::Connection) -> Result<()> {
 }
 
 /// Starts her body's thread: the overlay, its link, and her reactions to what felt-tray tells it.
+/// KWin's window list (games, later her world).
+pub type Windows = watch::Receiver<crate::screen::kwin::Snapshot>;
+
 pub fn start(
     cfg: &config::Body,
     core: Arc<FeltCore>,
     player: Player,
     cursor: Cursor,
+    windows: Windows,
 ) -> Result<Handle> {
     let (tx, rx) = mpsc::unbounded_channel();
     let cfg = cfg.clone();
@@ -122,7 +134,8 @@ pub fn start(
                 .enable_all()
                 .build()
                 .expect("her body's runtime");
-            tokio::task::LocalSet::new().block_on(&rt, run(cfg, core, player, cursor, rx));
+            let body = run(cfg, core, player, cursor, windows, rx);
+            tokio::task::LocalSet::new().block_on(&rt, body);
         })
         .context("can't start her body's thread")?;
     Ok(Handle { tx })
@@ -133,6 +146,7 @@ async fn run(
     core: Arc<FeltCore>,
     player: Player,
     cursor: Cursor,
+    windows: Windows,
     mut rx: mpsc::UnboundedReceiver<Msg>,
 ) {
     let o = Arc::new(Overlay::new());
@@ -146,6 +160,7 @@ async fn run(
     let state_dir = crate::config::data_dir().unwrap_or_else(|_| ".".into());
     let mood_path = state_dir.join("mood.json");
     let events = events::Events::start(core.clone(), state_dir.join("day_start.json"));
+    let (sentences, queue) = mpsc::unbounded_channel();
     let ctx = Rc::new(Ctx {
         overlay: o,
         behavior: Rc::new(behavior),
@@ -164,12 +179,16 @@ async fn run(
         presence: RefCell::new(presence::Presence::new(clock::monotonic_s as fn() -> f64)),
         presence_walk: RefCell::new(None),
         exit_left: Cell::new(true),
+        sentences,
+        quiet: Cell::new(false),
+        last_pick: RefCell::new(HashMap::new()),
+        streak: RefCell::new(Vec::new()),
     });
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
     tokio::task::spawn_local(ambient::idle_refresh(ctx.clone()));
     tokio::task::spawn_local(ambient::run(ctx.clone()));
     tokio::task::spawn_local(gaze::run(ctx.clone(), cursor));
-    let (sentences, queue) = mpsc::unbounded_channel();
+    tokio::task::spawn_local(signals::run(ctx.clone(), windows, cfg.data_dir.clone()));
     tokio::task::spawn_local(speech::run(ctx.clone(), queue));
     while let Some(msg) = rx.recv().await {
         match msg {
@@ -186,34 +205,11 @@ async fn run(
                 tag,
                 emotion,
                 prompted,
-            } => {
-                if !presence::visible(&ctx) {
-                    if !prompted {
-                        continue; // you sent her away: nothing unprompted
-                    }
-                    presence::show(&ctx); // a line you sent brings her back
-                }
-                let generation = ctx.next_generation();
-                ctx.bubble.replace(text.clone());
-                let reaction = Some(reply::begin(&ctx, &text, tag, emotion, prompted));
-                let _ = sentences.send(Sentence {
-                    generation,
-                    text,
-                    audio,
-                    reaction,
-                });
-            }
+            } => speech::say(&ctx, text, audio, tag, emotion, prompted),
             Msg::Hidden(true) => presence::hide(&ctx),
             Msg::Hidden(false) => presence::show(&ctx),
-            Msg::More { text, audio } => {
-                let generation = ctx.generation.get();
-                let _ = sentences.send(Sentence {
-                    generation,
-                    text,
-                    audio,
-                    reaction: None,
-                });
-            }
+            Msg::Quiet(q) => ctx.quiet.set(q),
+            Msg::More { text, audio } => speech::more(&ctx, text, audio),
         }
     }
 }

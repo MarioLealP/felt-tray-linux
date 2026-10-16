@@ -24,13 +24,18 @@ publish.workspace = true
 
 [dependencies]
 # her body's logic (crates/)
+felt-afk = { path = "crates/afk" }
 felt-faces = { path = "crates/faces" }
+felt-games = { path = "crates/games" }
 felt-gaze = { path = "crates/gaze" }
 felt-geometry = { path = "crates/geometry" }
+felt-gpu = { path = "crates/gpu" }
 felt-library = { path = "crates/library" }
 felt-mood = { path = "crates/mood" }
 felt-presence = { path = "crates/presence" }
+felt-reaction-table = { path = "crates/reaction-table" }
 felt-state = { path = "crates/state" }
+felt-tone = { path = "crates/tone" }
 
 anyhow = "1.0.104"
 futures-util = { version = "0.3.34", default-features = false }

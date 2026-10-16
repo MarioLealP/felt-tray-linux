@@ -10,7 +10,11 @@ use tokio::sync::{mpsc, oneshot};
 
 use super::ctx::{BUBBLE_MIN_S, CLIP_TIMEOUT_S, Ctx};
 use super::lipsync;
-use super::reply::Pending;
+use super::presence;
+use super::reply::{self, Pending};
+
+/// How many recent emotions her tone line looks at.
+const STREAK_LEN: usize = 5;
 
 /// How long past a sentence's last cue she still counts as speaking (the gap to the next streamed one).
 const SPEAKING_SLACK_S: f64 = 1.5;
@@ -21,6 +25,49 @@ pub struct Sentence {
     pub audio: Vec<u8>,
     /// The first sentence of a reply: its reaction.
     pub reaction: Option<Pending>,
+}
+
+/// A reply's first (or only) sentence: she says it with a reaction. `prompted` = you asked for it. While she's
+/// hidden an unprompted line is dropped; one you asked for brings her back.
+pub fn say(
+    ctx: &Rc<Ctx>,
+    text: String,
+    audio: Vec<u8>,
+    tag: Option<String>,
+    emotion: Option<String>,
+    prompted: bool,
+) {
+    if !presence::visible(ctx) {
+        if !prompted {
+            return;
+        }
+        presence::show(ctx);
+    }
+    let generation = ctx.next_generation();
+    ctx.bubble.replace(text.clone());
+    if let Some(e) = &emotion {
+        let mut streak = ctx.streak.borrow_mut();
+        streak.push(e.clone());
+        let extra = streak.len().saturating_sub(STREAK_LEN);
+        streak.drain(..extra);
+    }
+    let reaction = Some(reply::begin(ctx, &text, tag, emotion, prompted));
+    let _ = ctx.sentences.send(Sentence {
+        generation,
+        text,
+        audio,
+        reaction,
+    });
+}
+
+/// A later sentence of the current reply.
+pub fn more(ctx: &Ctx, text: String, audio: Vec<u8>) {
+    let _ = ctx.sentences.send(Sentence {
+        generation: ctx.generation.get(),
+        text,
+        audio,
+        reaction: None,
+    });
 }
 
 pub async fn run(ctx: Rc<Ctx>, mut rx: mpsc::UnboundedReceiver<Sentence>) {

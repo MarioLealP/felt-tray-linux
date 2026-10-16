@@ -816,13 +816,18 @@ name = "felt-tray"
 version = "0.5.0"
 dependencies = [
  "anyhow",
+ "felt-afk",
  "felt-faces",
+ "felt-games",
  "felt-gaze",
  "felt-geometry",
+ "felt-gpu",
  "felt-library",
  "felt-mood",
  "felt-presence",
+ "felt-reaction-table",
  "felt-state",
+ "felt-tone",
  "futures-util",
  "getrandom 0.4.3",
  "image",

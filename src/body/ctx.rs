@@ -1,6 +1,7 @@
 //! What every part of her body shares, on the body thread (single-threaded: `Rc`/`Cell` are fine here).
 
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Instant;
@@ -12,6 +13,7 @@ use super::events::Events;
 use super::mood::Mood;
 use super::overlay::{Overlay, Rig};
 use super::presence::Presence;
+use super::speech::Sentence;
 use crate::audio::Player;
 use crate::core::FeltCore;
 
@@ -46,6 +48,14 @@ pub struct Ctx {
     pub presence_walk: RefCell<Option<tokio::task::JoinHandle<()>>>,
     /// Which edge she left through (true = screen left), so she comes back the same way.
     pub exit_left: Cell<bool>,
+    /// Her sentences, in order (speech.rs).
+    pub sentences: tokio::sync::mpsc::UnboundedSender<Sentence>,
+    /// The Felt app's quiet switch: no spoken lines nobody asked for.
+    pub quiet: Cell<bool>,
+    /// Per reaction-table key, the last pick (no immediate repeats).
+    pub last_pick: RefCell<HashMap<String, String>>,
+    /// The last few emotions she reacted with (her tone line's streak).
+    pub streak: RefCell<Vec<String>>,
 }
 
 impl Ctx {

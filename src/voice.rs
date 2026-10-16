@@ -49,6 +49,13 @@ impl Voice {
         }
     }
 
+    /// The Felt app's quiet switch, for her body (no spoken reactions nobody asked for).
+    pub fn set_quiet(&self, quiet: bool) {
+        if let Some(b) = &self.body {
+            b.set_quiet(quiet);
+        }
+    }
+
     /// Is there a body to hide?
     pub fn has_body(&self) -> bool {
         self.body.is_some()

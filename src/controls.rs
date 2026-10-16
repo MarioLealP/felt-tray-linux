@@ -54,6 +54,9 @@ pub async fn run(core: Arc<FeltCore>, switches: Arc<Switches>, voice: Voice) {
                 if s.quiet.on && !was_quiet {
                     voice.player().stop(); // cut off mid-sentence
                 }
+                if s.quiet.on != was_quiet || applied.is_none() {
+                    voice.set_quiet(s.quiet.on);
+                }
                 if s.hide.on != was_hidden || applied.is_none() {
                     voice.set_hidden(s.hide.on);
                 }

@@ -1,7 +1,7 @@
 //! What her body knows about itself: the animation tags on this desktop (one folder per tag in the overlay's
 //! library) and her face poses. Plus the fallbacks for tags a desktop may not have.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use felt_faces::ShapeWeightsByName;
@@ -9,6 +9,8 @@ use serde_json::{Map, Value};
 
 pub struct Assets {
     pub tags: HashSet<String>,
+    /// The reaction table (data/reactions.json): per event key, its candidate faces/clips.
+    pub reactions: HashMap<String, Vec<felt_reaction_table::Entry>>,
     /// Sorted, for felt-core's reaction pick.
     pub tag_list: Vec<String>,
     poses: ShapeWeightsByName,
@@ -20,13 +22,16 @@ impl Assets {
         let mut tag_list: Vec<String> = tags.iter().cloned().collect();
         tag_list.sort();
         let poses = felt_faces::load_face_poses(&data_dir.join("face_poses.json"));
+        let reactions = felt_reaction_table::load_reactions(&data_dir.join("reactions.json"));
         tracing::info!(
-            "her body: {} animation tags, {} face poses",
+            "her body: {} animation tags, {} face poses, {} reaction keys",
             tags.len(),
-            poses.len()
+            poses.len(),
+            reactions.len()
         );
         Self {
             tags,
+            reactions,
             tag_list,
             poses,
         }
@@ -67,6 +72,7 @@ mod tests {
         Assets {
             tag_list: tags.iter().cloned().collect(),
             tags,
+            reactions: HashMap::new(),
             poses: ShapeWeightsByName::new(),
         }
     }
