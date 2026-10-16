@@ -1,6 +1,6 @@
 pkgbase = felt-tray
 	pkgdesc = Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, screen reactions (KDE), tray icon / D-Bus API
-	pkgver = 0.4.0
+	pkgver = 0.5.0
 	pkgrel = 1
 	url = https://git.clockmost.com/pkgs/felt-tray
 	arch = x86_64
@@ -14,6 +14,8 @@ pkgbase = felt-tray
 	depends = gtk3
 	depends = xdg-utils
 	optdepends = pipewire: pw-play, the default player for her voice (or set `player` in the config)
+	optdepends = godot: runs her body (the felt-godot-overlay project), [body] in the config
+	optdepends = rhubarb-lip-sync: times her mouth to her voice (her body)
 	options = !lto
 	options = !debug
 
