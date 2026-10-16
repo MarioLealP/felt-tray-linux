@@ -64,8 +64,13 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   ("checking" / "online" / "offline") and an `Agenda` property: the next `agenda_days` of her calendar as JSON
   (felt-core `/v1/calendar/upcoming`, refreshed every 5 min) for a shell's calendar - she reminds, it only shows. With `tray_icon = false` a shell's own button uses it instead of the icon
   (clockmost-shell's Felt chip does).
+- **Her body, also**: idle variety and ambient actions (walks, sitting, sleepy late at night); the hide switch
+  walks her off screen, quiet (= hide + hush) adds "zip it" and a line when it's lifted (`sounds`: her recorded
+  clips); she notices games (KWin's `steam_app_*` windows + games.toml), AFK and GPU heat (amdgpu edge) through
+  the reaction table and felt-core's `/v1/react/event`; she bobs to music (`music_capture`: PipeWire's monitor,
+  in memory only).
 - **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down; for her body
-  the ambient/world/music/signal loops, props, outfits, hush and presence (in progress). Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
+  standing/sitting on windows, outfits, props, call ducking, key-mash. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
 
-Modules: `config` · `core` (felt-core client) · `chat` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`).
+Modules: `config` · `core` (felt-core client) · `chat` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`).
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).
