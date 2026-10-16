@@ -16,6 +16,8 @@ depends=(
 )
 optdepends=(
   'pipewire: pw-play, the default player for her voice (or set `player` in the config)'
+  'godot: runs her body (the felt-godot-overlay project), [body] in the config'
+  'rhubarb-lip-sync: times her mouth to her voice (her body)'
 )
 makedepends=('rust' 'cargo' 'mold')
 options=('!lto' '!debug')
@@ -41,4 +43,6 @@ package() {
   install -Dm644 capture_blocklist.example.toml "$pkgdir/usr/share/doc/$pkgname/capture_blocklist.example.toml"
   # KDE: lets KWin grant /usr/bin/felt-tray per-window screenshots (screen reactions); inert elsewhere
   install -Dm644 install/org.clockmost.felt-tray.desktop "$pkgdir/usr/share/applications/org.clockmost.felt-tray.desktop"
+  # her body's data (face poses, reactions, games, outfits): the [body] data_dir default
+  install -Dm644 -t "$pkgdir/usr/share/$pkgname/body/" data/*
 }

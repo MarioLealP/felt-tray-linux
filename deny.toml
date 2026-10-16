@@ -39,6 +39,8 @@ ignore = true
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
+# our own workspace crates (crates/, publish = false) are path dependencies, never from a registry
+allow-wildcard-paths = true
 
 [sources]
 unknown-registry = "deny"
