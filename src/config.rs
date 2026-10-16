@@ -79,9 +79,32 @@ pub struct Body {
     /// The chance per ambient tick (every 20-45 s) of an ambient outfit swap.
     #[serde(default = "default_outfit_chance")]
     pub outfit_ambient_chance: f64,
+    /// Call apps (PipeWire application.name, lowercase): with their mic open she's on a call and ducks.
+    #[serde(default = "default_call_apps")]
+    pub call_apps: Vec<String>,
+    /// A call voice louder than this (peak, 0-1) counts as someone talking.
+    #[serde(default = "default_call_threshold")]
+    pub call_peak_threshold: f64,
+    /// How much quieter her voice goes while someone on the call talks.
+    #[serde(default = "default_duck_db")]
+    pub duck_db: f64,
     /// Captures what the speakers play (16 kHz mono f32 on stdout) so she can bob to music; [] = off.
     #[serde(default = "default_music_capture")]
     pub music_capture: Vec<String>,
+}
+
+fn default_call_apps() -> Vec<String> {
+    ["equibop", "vesktop", "discord", "webcord", "teams", "zoom"]
+        .map(String::from)
+        .to_vec()
+}
+
+fn default_call_threshold() -> f64 {
+    0.02
+}
+
+fn default_duck_db() -> f64 {
+    9.0
 }
 
 fn default_outfit_chance() -> f64 {

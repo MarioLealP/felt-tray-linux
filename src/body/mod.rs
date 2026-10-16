@@ -5,6 +5,7 @@
 
 mod ambient;
 mod assets;
+mod call;
 mod clock;
 mod ctx;
 mod events;
@@ -213,6 +214,12 @@ async fn run(
     tokio::task::spawn_local(overlay_events(ctx.clone()));
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
     tokio::task::spawn_local(face::micro_expressions(ctx.clone()));
+    let call = call::Settings {
+        apps: cfg.call_apps.clone(),
+        peak_threshold: cfg.call_peak_threshold,
+        duck_db: cfg.duck_db,
+    };
+    tokio::task::spawn_local(call::run(ctx.clone(), call));
     tokio::task::spawn_local(ambient::idle_refresh(ctx.clone()));
     tokio::task::spawn_local(ambient::run(ctx.clone()));
     tokio::task::spawn_local(gaze::run(ctx.clone(), cursor));

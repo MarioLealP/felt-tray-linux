@@ -9,6 +9,9 @@ use tokio::io::AsyncWriteExt;
 use tokio::process::{Child, Command};
 use tokio::sync::mpsc;
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
+
 use tokio::sync::oneshot;
 
 enum Cmd {
@@ -25,14 +28,22 @@ struct Clip {
 #[derive(Clone)]
 pub struct Player {
     tx: mpsc::UnboundedSender<Cmd>,
+    /// Her voice's volume for the next clips (f32 bits; 1.0 = as recorded) - ducked under a call.
+    gain: Arc<AtomicU32>,
 }
 
 impl Player {
     /// Starts the player task; needs a tokio runtime.
     pub fn spawn(command: Vec<String>) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        tokio::spawn(run(rx, command));
-        Self { tx }
+        let gain = Arc::new(AtomicU32::new(1.0f32.to_bits()));
+        tokio::spawn(run(rx, command, gain.clone()));
+        Self { tx, gain }
+    }
+
+    /// Volume for the clips that start from now on (`pw-play --volume`; other players ignore it).
+    pub fn set_gain(&self, gain: f32) {
+        self.gain.store(gain.to_bits(), Ordering::Relaxed);
     }
 
     pub fn play(&self, wav: Vec<u8>) {
@@ -58,14 +69,19 @@ impl Player {
     }
 }
 
-async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>, command: Vec<String>) {
+async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>, command: Vec<String>, gain: Arc<AtomicU32>) {
     let mut queue: VecDeque<Clip> = VecDeque::new();
     let mut current: Option<Child> = None;
     loop {
         if current.is_none()
             && let Some(clip) = queue.pop_front()
         {
-            current = start(&command, clip.wav).await;
+            current = start(
+                &command,
+                clip.wav,
+                f32::from_bits(gain.load(Ordering::Relaxed)),
+            )
+            .await;
             if current.is_some()
                 && let Some(started) = clip.started
             {
@@ -92,10 +108,13 @@ async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>, command: Vec<String>) {
     }
 }
 
-async fn start(command: &[String], wav: Vec<u8>) -> Option<Child> {
+async fn start(command: &[String], wav: Vec<u8>, gain: f32) -> Option<Child> {
     let (program, args) = command.split_first()?;
+    let volume = (program.ends_with("pw-play") && (gain - 1.0).abs() > f32::EPSILON)
+        .then(|| format!("--volume={gain:.3}"));
     // nosemgrep: clockmost-shell-out  the user's configured player (no shell); the WAV goes in on stdin
     let mut child = Command::new(program)
+        .args(volume)
         .args(args)
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
