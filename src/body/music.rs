@@ -10,7 +10,7 @@ use std::process::Stdio;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use felt_beat::{TempoLock, beat_phase, estimate_tempo_from_audio};
+use felt_beat::{TempoLock, estimate_tempo_from_audio};
 use felt_music_events::MusicEventTracker;
 use serde_json::json;
 use tokio::io::AsyncReadExt;
@@ -42,7 +42,8 @@ pub async fn run(ctx: Rc<Ctx>, capture: Vec<String>) {
     let mut lock = TempoLock::new();
     let mut events = MusicEventTracker::new(clock::monotonic_s as fn() -> f64);
     let mut tick = tokio::time::interval(TICK);
-    let (mut anchor, mut sent_at) = (Instant::now(), None::<Instant>);
+    // one continuous beat clock: advanced by each tick's own bpm, so a drifting estimate never jumps the phase
+    let (mut phase, mut ticked, mut sent_at) = (0.0f64, Instant::now(), None::<Instant>);
     loop {
         tick.tick().await;
         let frames: Vec<f64> = {
@@ -65,17 +66,18 @@ pub async fn run(ctx: Rc<Ctx>, capture: Vec<String>) {
         let was = lock.locked;
         let locked = lock.update(estimate, None);
         ctx.tempo_locked.set(locked);
+        let dt = ticked.elapsed().as_secs_f64();
+        ticked = Instant::now();
         if locked {
-            if !was {
-                anchor = Instant::now();
+            if was {
+                phase = (phase + dt * lock.bpm / 60.0).rem_euclid(1.0);
+            } else {
+                phase = 0.0;
                 sent_at = None;
                 tracing::info!("music: tempo lock at {:.1} BPM", lock.bpm);
             }
             if sent_at.is_none_or(|t| t.elapsed() >= BEAT_RESEND) {
                 sent_at = Some(Instant::now());
-                let now = clock::monotonic_s();
-                let reference = now - anchor.elapsed().as_secs_f64();
-                let phase = beat_phase(now, reference, lock.bpm);
                 let happiness = ctx
                     .mood
                     .borrow()
