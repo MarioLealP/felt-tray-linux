@@ -95,15 +95,20 @@ pub fn block_reason(w: &WindowInfo, bl: &Blocklist) -> Option<&'static str> {
     None
 }
 
-/// Exact titles of Felt's own windows: the chat window and her Godot overlay windows.
-const FELT_TITLES: [&str; 3] = ["Felt", "Felt Overlay", "Felt Overlay (DEBUG)"];
+/// Felt's own window titles: the chat window ("Felt", exact) and her Godot windows, which start with one of
+/// these ("Felt Overlay", "Felt Overlay (screen 2)", "Felt Studio").
+const FELT_TITLE_PREFIXES: [&str; 2] = ["Felt Overlay", "Felt Studio"];
 
-/// Felt never captures herself: our own process, or one of her window titles (exact match only).
+fn is_felt_title(title: &str) -> bool {
+    title == "Felt" || FELT_TITLE_PREFIXES.iter().any(|p| title.starts_with(p))
+}
+
+/// Felt never captures herself: our own process, or one of her window titles.
 pub fn exclusion_reason(w: &WindowInfo, own_pid: u32) -> Option<&'static str> {
     if w.pid != 0 && w.pid == own_pid {
         return Some("felt-pid");
     }
-    if FELT_TITLES.contains(&w.title.as_str()) {
+    if is_felt_title(&w.title) {
         return Some("felt-title");
     }
     None
@@ -278,12 +283,28 @@ mod tests {
                 .target
                 .is_none()
         );
-        chat.pid = 0; // no pid info: the exact title still excludes it
+        chat.pid = 0; // no pid info: the title still excludes it
         assert!(
             decide(std::slice::from_ref(&chat), &bl(&[], &[]), Some("c"), 42)
                 .target
                 .is_none()
         );
+    }
+
+    #[test]
+    fn her_overlay_side_windows_are_excluded() {
+        for t in [
+            "Felt Overlay",
+            "Felt Overlay (screen 2)",
+            "Felt Overlay (DEBUG)",
+            "Felt Studio",
+        ] {
+            assert_eq!(
+                exclusion_reason(&win("o", "godot", t), 1),
+                Some("felt-title")
+            );
+        }
+        assert_eq!(exclusion_reason(&win("o", "kate", "Felt notes"), 1), None);
     }
 
     #[test]
