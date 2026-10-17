@@ -150,6 +150,9 @@ impl Screen {
             )
             .await
         {
+            Ok(Some(reply)) if reply.text.trim().is_empty() => {
+                tracing::info!("screen: nothing to say about {}", target.label());
+            }
             Ok(Some(reply)) => {
                 tracing::info!(
                     "screen: reaction to {} ({} chars)",

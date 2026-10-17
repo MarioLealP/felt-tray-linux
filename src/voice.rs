@@ -36,6 +36,9 @@ impl Voice {
         emotion: Option<String>,
         prompted: bool,
     ) {
+        if text.trim().is_empty() && audio.is_empty() {
+            return; // nothing to say (felt-core's "no reaction"): no gesture, no face
+        }
         match &self.body {
             Some(b) => b.reply(text, audio, tag, emotion, prompted),
             None => self.player.play(audio),
