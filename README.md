@@ -82,9 +82,15 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
 - **Also**: accessories she wears (one per slot, an outfit's own or an ambient pick), the weather (rain -> the
   umbrella), mouthing along to a chorus, and her tone line (mood, time of day) sent with your chat lines and
   screen reactions.
-- **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down. Not ported on
+- **Shortcuts** (`hotkeys = true`, the desktop portal's GlobalShortcuts): talk (press, talk, press again ->
+  `/v1/voice-chat`; the default mic via pw-record, in memory), chat, hide, be right back, shoo, come here, look at
+  this, repeat, hush, clean house, ledge - registered with no keys; assign them in the desktop's shortcut settings.
+  A reply's desktop action (X-UI-Action: "be right back", "shush for ten minutes") goes to her body.
+- **Her volume**: with pw-play her voice and the overlay's sound share one "Felt" stream in the volume mixer
+  (a pw-loopback felt-tray keeps open; PipeWire remembers its slider).
+- **Not yet**: the raw-ntfy fallback when felt-core is down. Not ported on
   purpose: rage-click detection (Wayland would need raw input-device access), stepping aside for fullscreen
   apps (only with a second view to go to). Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
 
-Modules: `config` · `core` (felt-core client) · `chat` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`, `world`, `nav`, `ledge`, `outfits`, `tees`, `face`, `lines`, `call`, `window_events`, `props`, `weather`, `sing`).
+Modules: `config` · `core` (felt-core client) · `chat` · `mic` · `hotkeys` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`, `world`, `nav`, `ledge`, `outfits`, `tees`, `face`, `lines`, `call`, `window_events`, `props`, `weather`, `sing`).
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).
