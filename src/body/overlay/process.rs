@@ -36,6 +36,9 @@ pub async fn launch(command: &[String], port: u16) -> Result<Launched> {
     // nosemgrep: clockmost-shell-out  the user's configured overlay command (no shell); the secret goes on stdin
     let mut child = Command::new(program)
         .args(&args)
+        // her sound effects go into the same "Felt" mixer stream as her voice (audio.rs; PulseAudio clients
+        // honour PULSE_SINK, and fall back to the default output if it isn't there)
+        .env("PULSE_SINK", "felt-voice")
         .stdin(std::process::Stdio::piped())
         .kill_on_drop(true)
         .spawn()
