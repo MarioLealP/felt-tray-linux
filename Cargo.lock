@@ -813,7 +813,7 @@ version = "0.1.0"
 
 [[package]]
 name = "felt-tray"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "anyhow",
  "felt-afk",
