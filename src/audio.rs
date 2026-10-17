@@ -1,5 +1,6 @@
 //! Her voice: WAV clips played one after another by the configured player (default PipeWire's `pw-play -`,
-//! WAV on stdin). A new reply calls [`Player::stop`] first, which kills the clip that's playing and drops the
+//! WAV on stdin). With pw-play every clip goes into one loopback felt-tray keeps open, "Felt" - a stream that
+//! stays in the desktop's volume mixer, so its slider is hers (and remembered), not reset every sentence. A new reply calls [`Player::stop`] first, which kills the clip that's playing and drops the
 //! queue. [`Player::play_then`] reports the moment a clip really starts (her body times her mouth to it).
 
 use std::collections::VecDeque;
@@ -37,6 +38,20 @@ impl Player {
     pub fn spawn(command: Vec<String>) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let gain = Arc::new(AtomicU32::new(1.0f32.to_bits()));
+        let command = match command
+            .first()
+            .is_some_and(|p| p.ends_with("pw-play"))
+            .then(mixer_stream)
+            .flatten()
+        {
+            Some(sink) => {
+                tokio::spawn(sink.keep_alive());
+                let mut c = command;
+                c.insert(1, format!("--target={SINK}"));
+                c
+            }
+            None => command,
+        };
         tokio::spawn(run(rx, command, gain.clone()));
         Self { tx, gain }
     }
@@ -106,6 +121,45 @@ async fn run(mut rx: mpsc::UnboundedReceiver<Cmd>, command: Vec<String>, gain: A
             }
         }
     }
+}
+
+const SINK: &str = "felt-voice";
+
+struct MixerStream(Child);
+
+impl MixerStream {
+    /// Holds the loopback for felt-tray's life (it ends with us: kill_on_drop).
+    async fn keep_alive(mut self) {
+        let _ = self.0.wait().await;
+        tracing::warn!(
+            "audio: the \"Felt\" mixer stream ended - her voice goes to the default output"
+        );
+    }
+}
+
+/// The "Felt" stream in the volume mixer: a pw-loopback whose sink her clips play into.
+fn mixer_stream() -> Option<MixerStream> {
+    // nosemgrep: clockmost-shell-out  PipeWire's own loopback tool, fixed arguments (no shell)
+    let child = Command::new("pw-loopback")
+        .args(["-n", SINK, "--capture-props"])
+        .arg(format!(
+            "media.class=Audio/Sink node.name={SINK} node.description=\"Felt's voice (felt-tray)\" \
+             node.virtual=true priority.session=0 priority.driver=0"
+        ))
+        .arg("--playback-props")
+        .arg(
+            "node.name=felt-voice-out application.name=Felt application.id=org.clockmost.felt-tray \
+             media.name=\"Felt's voice\" media.role=Communication",
+        )
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .kill_on_drop(true)
+        .spawn()
+        .inspect_err(|e| {
+            tracing::warn!("audio: no \"Felt\" mixer stream ({e}) - clips play straight out")
+        })
+        .ok()?;
+    Some(MixerStream(child))
 }
 
 async fn start(command: &[String], wav: Vec<u8>, gain: f32) -> Option<Child> {
