@@ -308,8 +308,9 @@ impl FeltCore {
         }))
     }
 
-    /// felt-core's cached current weather condition ("rain", "sun", ...); Ok(None) = no such endpoint (404).
-    pub async fn weather_now(&self) -> Result<Option<String>> {
+    /// felt-core's cached current weather condition: Some("rain" / "sun" / ...), Some(None) while it doesn't
+    /// know, None = no such endpoint (404).
+    pub async fn weather_now(&self) -> Result<Option<Option<String>>> {
         let r = self
             .client()?
             .get(format!("{}/v1/weather/now", self.base))
@@ -320,7 +321,7 @@ impl FeltCore {
             return Ok(None);
         }
         let v: serde_json::Value = r.error_for_status()?.json().await?;
-        Ok(Some(v["condition"].as_str().unwrap_or_default().to_owned()))
+        Ok(Some(v["condition"].as_str().map(str::to_owned)))
     }
 
     /// One diary event (her body's notices); 204 = taken, 404 = a felt-core without `/v1/events`.

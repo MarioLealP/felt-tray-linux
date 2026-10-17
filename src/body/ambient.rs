@@ -48,6 +48,7 @@ pub async fn run(ctx: Rc<Ctx>) {
             continue;
         }
         outfits::daily_tee(&ctx).await;
+        props::accessories::tick(&ctx).await;
         if outfits::tick(&ctx).await {
             continue; // a change was this tick's action
         }

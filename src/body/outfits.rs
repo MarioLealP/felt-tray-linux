@@ -389,11 +389,23 @@ pub async fn on_connected(ctx: &Ctx) {
 }
 
 /// main.gd's answers: back to the default after a failed swap; the tee back on the default outfit.
-pub async fn on_message(ctx: &Ctx, m: &Value) {
-    if m["outfit_applied"]["id"].as_str() == Some(DEFAULT_ID)
-        && let Some((tee, _)) = tees::todays(ctx)
-    {
-        tees::wear(ctx, &tee, false).await;
+pub async fn on_message(ctx: &Rc<Ctx>, m: &Value) {
+    if let Some(id) = m["outfit_applied"]["id"].as_str() {
+        if id == DEFAULT_ID
+            && let Some((tee, _)) = tees::todays(ctx)
+        {
+            tees::wear(ctx, &tee, false).await;
+        }
+        // this outfit's accessories on, the previous outfit's off
+        let items = ctx
+            .outfits
+            .get(id)
+            .map(|o| o.accessories.clone())
+            .unwrap_or_default();
+        let c = ctx.clone();
+        tokio::task::spawn_local(
+            async move { super::props::accessories::set_outfit(&c, &items).await },
+        );
     }
     if let Some(id) = m["outfit_failed"]["id"].as_str() {
         tracing::error!(

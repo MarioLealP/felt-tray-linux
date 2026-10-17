@@ -3,6 +3,7 @@
 //! a lamp, late night -> a blanket...) with per-kind cooldowns, playing a clip that needs a prop, the extra
 //! ambient actions (tidy, kick, time-of-day props), and main.gd's `prop_moved` reports.
 
+pub mod accessories;
 pub mod clutter;
 pub mod director;
 pub mod manifest;
@@ -29,6 +30,7 @@ pub struct Props {
     last_event: RefCell<HashMap<String, f64>>,
     /// The episode in flight (one at a time).
     task: RefCell<Option<tokio::task::JoinHandle<()>>>,
+    pub accessories: accessories::Accessories,
 }
 
 impl Props {
@@ -40,6 +42,7 @@ impl Props {
             sit_clips: RefCell::new(HashMap::new()),
             last_event: RefCell::new(HashMap::new()),
             task: RefCell::new(None),
+            accessories: accessories::Accessories::default(),
         }
     }
 

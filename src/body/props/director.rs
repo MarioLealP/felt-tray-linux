@@ -259,7 +259,7 @@ async fn pick_up(ctx: &Rc<Ctx>, id: &str, bone: &str) {
     steps(ctx, &seq, "grab", grab).await;
 }
 
-async fn conjure_held(ctx: &Rc<Ctx>, item: &str, bone: &str) -> String {
+pub async fn conjure_held(ctx: &Rc<Ctx>, item: &str, bone: &str) -> String {
     let id = ctx.props.store.borrow_mut().new_id(item);
     let conjure: Job = Box::pin(async {
         prop(
@@ -364,7 +364,7 @@ async fn put_down(ctx: &Rc<Ctx>, id: &str) {
     steps(ctx, &seq, "place", place).await;
 }
 
-async fn dismiss(ctx: &Ctx, id: &str) {
+pub async fn dismiss(ctx: &Ctx, id: &str) {
     prop(ctx, "despawn", id, json!({ "fx": "dissolve" })).await;
     ctx.props.store.borrow_mut().remove(id);
     let mut seat = ctx.props.seated_on.borrow_mut();
@@ -716,6 +716,7 @@ pub async fn clear(ctx: &Ctx) -> usize {
 /// A fresh overlay knows nothing: the catalogue, the floors, the chest, the clutter.
 pub async fn on_connected(ctx: &Ctx) {
     let p = &ctx.props;
+    super::accessories::reset(ctx); // a restarted overlay holds nothing
     if !p.manifest.enabled() {
         return;
     }

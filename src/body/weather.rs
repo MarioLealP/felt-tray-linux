@@ -12,7 +12,8 @@ const POLL: Duration = Duration::from_secs(600);
 pub async fn run(ctx: Rc<Ctx>) {
     loop {
         match ctx.core.weather_now().await {
-            Ok(Some(condition)) => {
+            Ok(Some(None)) => {} // felt-core doesn't know yet
+            Ok(Some(Some(condition))) => {
                 let changed = ctx.weather.borrow().as_deref() != Some(condition.as_str());
                 if changed {
                     tracing::info!("weather: {:?} -> {condition}", ctx.weather.borrow());
