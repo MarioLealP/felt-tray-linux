@@ -36,6 +36,10 @@ pub struct Config {
     /// Days of her calendar to offer the shell (D-Bus `Agenda`); 0 = off.
     #[serde(default = "default_agenda_days")]
     pub agenda_days: u32,
+    /// The server's alerts straight from ntfy while felt-core is down (Caddy's /ntfy/clockmost/json on the machine
+    /// host - clockmost).
+    #[serde(default = "default_true")]
+    pub raw_alerts: bool,
     /// Her own lines (felt-core's proactive channel), spoken.
     #[serde(default = "default_true")]
     pub proactive: bool,

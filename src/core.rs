@@ -401,6 +401,17 @@ impl FeltCore {
         Ok(r.status())
     }
 
+    /// The server's ntfy alerts as a stream of JSON lines (Caddy: tray identity only, it adds the token).
+    pub async fn raw_alerts(&self) -> Result<reqwest::Response> {
+        let r = self
+            .client()?
+            .get(format!("{}/ntfy/clockmost/json", self.base))
+            .timeout(Duration::from_secs(24 * 3600)) // a long-lived stream; reconnects if it drops
+            .send()
+            .await?;
+        Ok(r.error_for_status()?)
+    }
+
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.
     pub async fn ping(&self) -> bool {
         let Ok(c) = self.client() else { return false };

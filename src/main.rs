@@ -14,6 +14,7 @@ mod mic;
 mod notices;
 mod notify;
 mod proactive;
+mod raw_alerts;
 mod screen;
 mod tray;
 mod voice;
@@ -136,6 +137,7 @@ fn main() -> Result<()> {
     } else {
         None
     };
+    let status_raw = status.clone();
     let (status_tray, ping_core) = (tray.clone(), core.clone());
     rt.spawn(async move {
         loop {
@@ -171,6 +173,11 @@ fn main() -> Result<()> {
             n,
             switches.clone(),
         ));
+    }
+    if cfg.raw_alerts
+        && let Ok((n, _)) = &notifier
+    {
+        raw_alerts::start(core.clone(), n.clone(), status_raw);
     }
     match notifier {
         Ok(_) if !cfg.notices => {}
