@@ -26,6 +26,7 @@ mod props;
 mod react;
 mod reply;
 mod signals;
+mod sing;
 mod speech;
 mod tees;
 mod weather;
@@ -237,6 +238,7 @@ async fn run(
     tokio::task::spawn_local(overlay_events(ctx.clone()));
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path, tone));
     tokio::task::spawn_local(weather::run(ctx.clone()));
+    tokio::task::spawn_local(sing::run(ctx.clone()));
     tokio::task::spawn_local(face::micro_expressions(ctx.clone()));
     let call = call::Settings {
         apps: cfg.call_apps.clone(),

@@ -319,6 +319,28 @@ impl FeltCore {
         }))
     }
 
+    /// What's playing (Spotify via felt-core): track_id, is_playing, progress_ms, ...
+    pub async fn music_now(&self) -> Result<serde_json::Value> {
+        let r = self
+            .client()?
+            .get(format!("{}/v1/music/now", self.base))
+            .timeout(Duration::from_secs(5))
+            .send()
+            .await?;
+        Ok(r.error_for_status()?.json().await?)
+    }
+
+    /// The current track's lyrics: found, chorus {start_ms, end_ms}, timed lines.
+    pub async fn music_lyrics(&self) -> Result<serde_json::Value> {
+        let r = self
+            .client()?
+            .get(format!("{}/v1/music/lyrics", self.base))
+            .timeout(Duration::from_secs(5))
+            .send()
+            .await?;
+        Ok(r.error_for_status()?.json().await?)
+    }
+
     /// felt-core's cached current weather condition: Some("rain" / "sun" / ...), Some(None) while it doesn't
     /// know, None = no such endpoint (404).
     pub async fn weather_now(&self) -> Result<Option<Option<String>>> {
