@@ -11,7 +11,8 @@ use serde::Deserialize;
 pub struct Config {
     /// felt-core's machine host (Caddy requires the Felt client cert there), e.g. `https://felt-api.example`.
     pub felt_core_url: String,
-    /// The hosted Felt app the chat window opens (behind SSO).
+    /// The hosted Felt app the chat window opens: a host that takes the tray's client certificate (no login),
+    /// or one behind SSO.
     pub app_url: String,
     /// The renewer's `bundle.pem` (key + cert + intermediate in one file, replaced every ~hour).
     pub client_bundle: PathBuf,

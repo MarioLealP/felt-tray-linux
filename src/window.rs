@@ -12,7 +12,12 @@ use tao::dpi::LogicalSize;
 use tao::event_loop::{EventLoopProxy, EventLoopWindowTarget};
 use tao::platform::unix::WindowExtUnix;
 use tao::window::{Window, WindowBuilder};
-use wry::{NewWindowResponse, WebContext, WebView, WebViewBuilder, WebViewBuilderExtUnix};
+use webkit2gtk::{
+    AuthenticationRequestExt, AuthenticationScheme, Credential, CredentialPersistence, WebViewExt,
+};
+use wry::{
+    NewWindowResponse, WebContext, WebView, WebViewBuilder, WebViewBuilderExtUnix, WebViewExtUnix,
+};
 
 use crate::UiEvent;
 use crate::chat::Chat;
@@ -28,6 +33,9 @@ pub struct WindowSetup {
     pub app_url: Url,
     pub size: [f64; 2],
     pub hosts: Arc<Vec<String>>,
+    /// The tray's machine certificate (key + cert + chain, PEM): offered when the app's host asks for one, so
+    /// the window needs no login (felt-desktop.clockmost.com).
+    pub client_bundle: std::path::PathBuf,
     pub chat: Arc<Chat>,
     pub rt: tokio::runtime::Handle,
     pub proxy: EventLoopProxy<UiEvent>,
@@ -100,6 +108,7 @@ impl ChatWindow {
                 }
             })
             .build_gtk(window.default_vbox().context("no GTK box in the window")?)?;
+        offer_certificate(&webview, s);
         Ok(Self {
             _window: window,
             webview,
@@ -116,6 +125,39 @@ impl ChatWindow {
             tracing::warn!("can't hand the result back to the app: {e}");
         }
     }
+}
+
+/// Answers the app host's client-certificate request with the tray's bundle; other hosts and other
+/// authentication kinds get WebKit's default handling. Read fresh on every ask (never cached): the renewer
+/// replaces the bundle every couple of hours.
+fn offer_certificate(webview: &WebView, s: &WindowSetup) {
+    let (host, bundle) = (
+        s.app_url.host_str().unwrap_or_default().to_owned(),
+        s.client_bundle.clone(),
+    );
+    webview.webview().connect_authenticate(move |_, req| {
+        if req.scheme() != AuthenticationScheme::ClientCertificateRequested
+            || req.host().as_deref() != Some(host.as_str())
+        {
+            return false;
+        }
+        let cert = std::fs::read_to_string(&bundle)
+            .map_err(|e| e.to_string())
+            .and_then(|pem| {
+                webkit2gtk::gio::TlsCertificate::from_pem(&pem).map_err(|e| e.to_string())
+            });
+        match cert {
+            Ok(cert) => {
+                let cred = Credential::for_certificate(Some(&cert), CredentialPersistence::None);
+                felt_webkit_auth::authenticate(req, Some(&cred));
+            }
+            Err(e) => {
+                tracing::warn!("can't offer the tray certificate to {host}: {e}");
+                felt_webkit_auth::authenticate(req, None);
+            }
+        }
+        true
+    });
 }
 
 fn allowed(url: &str, hosts: &[String]) -> bool {

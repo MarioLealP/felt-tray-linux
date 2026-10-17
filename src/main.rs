@@ -265,6 +265,7 @@ fn main() -> Result<()> {
         app_url: cfg.app_url.parse().context("app_url is not a URL")?,
         size: cfg.window_size,
         hosts: Arc::new(cfg.window_hosts),
+        client_bundle: cfg.client_bundle.clone(),
         chat,
         rt: rt.handle().clone(),
         proxy,

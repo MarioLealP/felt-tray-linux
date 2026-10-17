@@ -1,0 +1,16 @@
+[package]
+name = "felt-webkit-auth"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+webkit2gtk = { version = "2.0.2", features = ["v2_40"] }
+
+# The one crate allowed an `unsafe` block: webkit2gtk has no safe binding for this call.
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

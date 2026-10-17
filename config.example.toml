@@ -5,7 +5,8 @@
 # its identity to felt-core. Example: "https://felt-api.example.org"
 felt_core_url = ""
 
-# The hosted Felt app the chat window opens (behind your SSO). Example: "https://felt.example.org/app/"
+# The hosted Felt app the chat window opens. On a host that asks for the client certificate below, the window
+# needs no login; behind SSO you log in once. Example: "https://felt-desktop.example.org/app/"
 app_url = ""
 
 # The tray's client certificate: ONE PEM file with key + certificate + chain, replaced in place when renewed

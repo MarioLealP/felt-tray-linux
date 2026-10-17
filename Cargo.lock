@@ -836,6 +836,7 @@ dependencies = [
  "felt-sounds",
  "felt-state",
  "felt-tone",
+ "felt-webkit-auth",
  "felt-window-events",
  "felt-world",
  "futures-util",
@@ -854,6 +855,7 @@ dependencies = [
  "toml 1.1.8+spec-1.1.0",
  "tracing",
  "tracing-subscriber",
+ "webkit2gtk",
  "wry",
  "zbus",
 ]
@@ -865,6 +867,13 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "felt-webkit-auth"
+version = "0.1.0"
+dependencies = [
+ "webkit2gtk",
 ]
 
 [[package]]
