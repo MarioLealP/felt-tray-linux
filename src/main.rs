@@ -9,6 +9,7 @@ mod chat;
 mod config;
 mod controls;
 mod core;
+mod hotkeys;
 mod notices;
 mod notify;
 mod proactive;
@@ -105,6 +106,7 @@ fn main() -> Result<()> {
     };
     let with_body = body.is_some();
     let body_bus = body.clone();
+    let body_keys = body.clone();
     let voice = voice::Voice::new(player, body);
     let chat = chat::Chat::new(core.clone(), voice.clone(), cfg.session_id.clone());
 
@@ -199,6 +201,30 @@ fn main() -> Result<()> {
             switches: switches.clone(),
         };
         rt.spawn(screen.run(rx));
+    }
+
+    if cfg.hotkeys {
+        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+        let conn = bus_conn.clone();
+        rt.spawn(async move {
+            if let Err(e) = hotkeys::run(conn, tx).await {
+                tracing::warn!("hotkeys: {e:#}");
+            }
+        });
+        let (proxy, body) = (proxy.clone(), body_keys.clone());
+        rt.spawn(async move {
+            while let Some(a) = rx.recv().await {
+                use hotkeys::Action;
+                match a {
+                    Action::Chat => {
+                        let _ = proxy.send_event(UiEvent::ShowChat);
+                    }
+                    Action::Ledge => body.iter().for_each(body::Handle::go_to_ledge),
+                    Action::Clean => body.iter().for_each(body::Handle::clear_props),
+                    other => tracing::info!("hotkeys: {other:?} - not wired yet"),
+                }
+            }
+        });
     }
 
     let setup = WindowSetup {

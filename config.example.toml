@@ -39,6 +39,10 @@ tray_icon = true
 # Plays her voice: a command that reads one WAV file on stdin (PipeWire's pw-play by default).
 # player = ["pw-play", "--media-role", "Communication", "-"]
 
+# Global shortcuts through the desktop portal: talk, chat, hide, brb, shoo, come here, look, repeat, hush,
+# clean house, ledge - registered with no keys; give the ones you want a key in the desktop's shortcut settings.
+# hotkeys = true
+
 # React to what's on screen (KDE Plasma only: KWin's window list + per-window screenshots). Before anything
 # is captured, the active window is checked against the blocklist; blocked or unidentified windows are never
 # captured, and a missing/unreadable blocklist means no captures at all.

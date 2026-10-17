@@ -48,6 +48,9 @@ pub struct Config {
     /// While you stay on one window, look again this often (seconds).
     #[serde(default = "default_sample")]
     pub screen_sample_s: u64,
+    /// Global shortcuts through the desktop portal (talk, hide, come here, ...).
+    #[serde(default = "default_true")]
+    pub hotkeys: bool,
     /// Her body: the Godot overlay felt-tray launches and drives. No `[body]` table = no body.
     #[serde(default)]
     pub body: Option<Body>,
