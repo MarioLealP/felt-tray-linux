@@ -9,6 +9,11 @@ ignore = [
     # proc-macro-error (unmaintained, build-time proc macro only) comes in through gtk-rs 0.18 (glib-macros), which
     # tao/wry still use for GTK3 on Linux. No fix until the Tauri stack moves to gtk4-rs.
     { id = "RUSTSEC-2024-0370", reason = "build-time only, via tao/wry's gtk-rs 0.18" },
+    # zbus 6 folded zbus_names/zvariant/zvariant_derive into itself (2026-10-17). Unmaintained, no known bug; we stay
+    # on zbus 5 while ksni (the tray icon, 0.3.6 latest) does - move both together when ksni takes zbus 6.
+    { id = "RUSTSEC-2026-0370", reason = "zvariant: merged into zbus 6; ksni still on zbus 5" },
+    { id = "RUSTSEC-2026-0371", reason = "zbus_names: merged into zbus 6; ksni still on zbus 5" },
+    { id = "RUSTSEC-2026-0372", reason = "zvariant_derive: merged into zbus 6; ksni still on zbus 5" },
 ]
 
 [licenses]
