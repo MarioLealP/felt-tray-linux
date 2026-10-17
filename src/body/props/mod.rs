@@ -154,6 +154,9 @@ pub fn ambient_weights(
     if !(6..23).contains(&hour) && !placed.iter().any(|i| i == "blanket") {
         w.push(("prop_event:time:late_night", 8.0));
     }
+    if ctx.weather.borrow().as_deref() == Some("rain") && due(ctx, "weather:rain") {
+        w.push(("prop_event:weather:rain", 8.0));
+    }
     w
 }
 

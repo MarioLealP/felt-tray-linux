@@ -308,6 +308,21 @@ impl FeltCore {
         }))
     }
 
+    /// felt-core's cached current weather condition ("rain", "sun", ...); Ok(None) = no such endpoint (404).
+    pub async fn weather_now(&self) -> Result<Option<String>> {
+        let r = self
+            .client()?
+            .get(format!("{}/v1/weather/now", self.base))
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await?;
+        if r.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        let v: serde_json::Value = r.error_for_status()?.json().await?;
+        Ok(Some(v["condition"].as_str().unwrap_or_default().to_owned()))
+    }
+
     /// One diary event (her body's notices); 204 = taken, 404 = a felt-core without `/v1/events`.
     pub async fn report_event(
         &self,

@@ -28,6 +28,7 @@ mod reply;
 mod signals;
 mod speech;
 mod tees;
+mod weather;
 mod window_events;
 mod world;
 
@@ -213,6 +214,7 @@ async fn run(
         world: RefCell::new(world::World::default()),
         outfits,
         props,
+        weather: RefCell::new(None),
         animations: cfg.animations.clone(),
         face_held_until: Cell::new(Instant::now()),
         grumbles: window_events::Grumbles::default(),
@@ -225,6 +227,7 @@ async fn run(
     });
     tokio::task::spawn_local(overlay_events(ctx.clone()));
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
+    tokio::task::spawn_local(weather::run(ctx.clone()));
     tokio::task::spawn_local(face::micro_expressions(ctx.clone()));
     let call = call::Settings {
         apps: cfg.call_apps.clone(),

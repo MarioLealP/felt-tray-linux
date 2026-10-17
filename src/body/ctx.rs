@@ -58,6 +58,8 @@ pub struct Ctx {
     pub cursor: Cell<Option<(f64, f64)>>,
     pub outfits: super::outfits::Outfits,
     pub props: super::props::Props,
+    /// felt-core's current weather condition, once known.
+    pub weather: RefCell<Option<String>>,
     /// The overlay's animation library (one folder per tag): which clips a tag has.
     pub animations: std::path::PathBuf,
     /// Her grumbles when a window drops her (window_events.rs).
