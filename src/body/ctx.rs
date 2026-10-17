@@ -73,6 +73,10 @@ pub struct Ctx {
     pub wardrobe_path: std::path::PathBuf,
     /// A steady beat is playing (music.rs): she may dance.
     pub tempo_locked: Cell<bool>,
+    /// A timed hush's end (the hush shortcut, "shush for 10 minutes").
+    pub hush_timer: RefCell<Option<tokio::task::JoinHandle<()>>>,
+    /// Her last reply's first sentence (voice + mouth cues), for "repeat that".
+    pub last_reply: RefCell<Option<(Vec<u8>, Vec<serde_json::Value>)>>,
     /// Since when the quiet switch has her hushed.
     pub hushed_at: Cell<Option<Instant>>,
     /// Her recorded lines (`presence/zip_it_1.wav` ...), when configured.

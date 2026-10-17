@@ -40,7 +40,12 @@ pub struct Screen {
 }
 
 impl Screen {
-    pub async fn run(self, mut windows: watch::Receiver<Snapshot>) {
+    /// `look`: "look at this" (the shortcut) - a capture right now, near-duplicate or not.
+    pub async fn run(
+        self,
+        mut windows: watch::Receiver<Snapshot>,
+        mut look: tokio::sync::mpsc::UnboundedReceiver<()>,
+    ) {
         tracing::info!("screen reactions on (KWin), sample every {:?}", self.sample);
         let mut last_active = String::new();
         let mut settle: Option<Instant> = None;
@@ -56,6 +61,10 @@ impl Screen {
                         last_active = active;
                         settle = Some(Instant::now() + SETTLE);
                     }
+                }
+                Some(()) = look.recv() => {
+                    let snap = windows.borrow().clone();
+                    self.capture_and_send(&snap, "manual", &mut seen).await;
                 }
                 () = sleep_until(wake) => {
                     let trigger = if settle.is_some_and(|s| s <= Instant::now()) {
@@ -115,7 +124,7 @@ impl Screen {
             }
             Err(e) => return tracing::warn!("screen: encode failed: {e}"),
         };
-        if let Some(&prev) = seen.get(&target.id) {
+        if let Some(&prev) = seen.get(&target.id).filter(|_| trigger != "manual") {
             let dist = (prev ^ hash).count_ones();
             let dup = dist <= DEDUPE_DISTANCE;
             tracing::info!(

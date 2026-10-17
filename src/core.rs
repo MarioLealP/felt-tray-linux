@@ -19,6 +19,10 @@ pub struct FeltCore {
 /// felt-core's chat answer: her text, and chunk 0 of her voice (WAV). A long reply streams: `stream` holds
 /// the id + chunk count, chunks 1.. come from [`FeltCore::reply_chunk`] (WP-54).
 pub struct Reply {
+    /// What felt-core heard (voice turns).
+    pub transcribed: String,
+    /// A skill's desktop action (`{"kind": "presence", "payload": {...}}`: hush, brb, come here ...).
+    pub ui_action: Option<serde_json::Value>,
     pub text: String,
     pub audio: Vec<u8>,
     pub stream: Option<(String, u32)>,
@@ -65,6 +69,35 @@ impl FeltCore {
         Ok(c)
     }
 
+    /// A spoken turn: your WAV -> her reply (same shape as a typed one, plus what she heard).
+    pub async fn voice_chat(
+        &self,
+        wav: Vec<u8>,
+        session_id: &str,
+        tone: Option<String>,
+    ) -> Result<Reply> {
+        let file = reqwest::multipart::Part::bytes(wav)
+            .file_name("voice.wav")
+            .mime_str("audio/wav")?;
+        let mut form = reqwest::multipart::Form::new().part("file", file);
+        if let Some(t) = tone {
+            form = form.text("tone", t);
+        }
+        let r = self
+            .client()?
+            .post(format!(
+                "{}/v1/voice-chat?session_id={session_id}",
+                self.base
+            ))
+            .multipart(form)
+            .send()
+            .await?;
+        if !r.status().is_success() {
+            bail!("felt-core answered {}", r.status());
+        }
+        reply_from(r).await
+    }
+
     /// `tone`: her body's mood/time-of-day line, which felt-core adds to her prompt (WP-15).
     pub async fn text_chat(
         &self,
@@ -81,17 +114,7 @@ impl FeltCore {
         if !r.status().is_success() {
             bail!("felt-core answered {}", r.status());
         }
-        let h = r.headers();
-        let text = header(h, "X-Reply-Text").unwrap_or_default();
-        let stream = stream_fields(header(h, "X-Reply-Stream"), header(h, "X-Reply-Chunks"));
-        let (tag, emotion) = (header(h, "X-Animation-Tag"), header(h, "X-Emotion"));
-        Ok(Reply {
-            text,
-            stream,
-            tag,
-            emotion,
-            audio: r.bytes().await?.to_vec(),
-        })
+        reply_from(r).await
     }
 
     pub async fn reply_chunk(&self, stream_id: &str, n: u32) -> Result<Chunk> {
@@ -188,6 +211,8 @@ impl FeltCore {
         let text = header(h, "X-Reply-Text").unwrap_or_default();
         let (tag, emotion) = (header(h, "X-Animation-Tag"), header(h, "X-Emotion"));
         Ok(Some(Reply {
+            transcribed: String::new(),
+            ui_action: None,
             text,
             stream: None,
             tag,
@@ -311,6 +336,8 @@ impl FeltCore {
             return Ok(None);
         }
         Ok(Some(Reply {
+            transcribed: String::new(),
+            ui_action: None,
             text,
             stream: None,
             tag,
@@ -383,6 +410,25 @@ impl FeltCore {
             .await
             .is_ok_and(|r| r.status().is_success())
     }
+}
+
+/// A chat answer (typed or spoken): her text, voice, stream, tag and any desktop action.
+async fn reply_from(r: reqwest::Response) -> Result<Reply> {
+    let h = r.headers();
+    let text = header(h, "X-Reply-Text").unwrap_or_default();
+    let stream = stream_fields(header(h, "X-Reply-Stream"), header(h, "X-Reply-Chunks"));
+    let (tag, emotion) = (header(h, "X-Animation-Tag"), header(h, "X-Emotion"));
+    let transcribed = header(h, "X-Transcribed-Text").unwrap_or_default();
+    let ui_action = header(h, "X-UI-Action").and_then(|j| serde_json::from_str(&j).ok());
+    Ok(Reply {
+        transcribed,
+        ui_action,
+        text,
+        stream,
+        tag,
+        emotion,
+        audio: r.bytes().await?.to_vec(),
+    })
 }
 
 /// Headers are percent-encoded by felt-core (non-ASCII replies).

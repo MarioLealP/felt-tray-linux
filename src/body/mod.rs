@@ -3,6 +3,7 @@
 //! like the Python event loop it was ported from; the rest of felt-tray talks to it through a [`Handle`].
 //! This file only wires the parts together.
 
+mod actions;
 mod ambient;
 mod assets;
 mod call;
@@ -69,6 +70,10 @@ enum Msg {
     Quiet(bool),
     /// Onto the ledge nearest the cursor, and sit.
     GoToLedge,
+    /// You're talking to her (the talk shortcut).
+    Listening(bool),
+    /// A shortcut or a reply's desktop action, by name.
+    Act(String, serde_json::Value),
     /// Clean house: every prop dissolves.
     ClearProps,
 }
@@ -116,6 +121,15 @@ impl Handle {
 
     pub fn tone(&self) -> String {
         self.tone.lock().expect("tone lock").clone()
+    }
+
+    pub fn listening(&self, on: bool) {
+        let _ = self.tx.send(Msg::Listening(on));
+    }
+
+    /// A named action: hide, show, brb, move, come, repeat, hush (`{"minutes"}`), unhush, stop.
+    pub fn act(&self, what: &str, payload: &serde_json::Value) {
+        let _ = self.tx.send(Msg::Act(what.to_owned(), payload.clone()));
     }
 
     pub fn go_to_ledge(&self) {
@@ -220,6 +234,8 @@ async fn run(
         quiet: Cell::new(false),
         sounds: cfg.sounds.clone(),
         hushed_at: Cell::new(None),
+        hush_timer: RefCell::new(None),
+        last_reply: RefCell::new(None),
         tempo_locked: Cell::new(false),
         world: RefCell::new(world::World::default()),
         outfits,
@@ -238,6 +254,7 @@ async fn run(
     tokio::task::spawn_local(overlay_events(ctx.clone()));
     tokio::task::spawn_local(mood::run(ctx.clone(), mood_path, tone));
     tokio::task::spawn_local(weather::run(ctx.clone()));
+    tokio::task::spawn_local(actions::back_from_brb(ctx.clone()));
     tokio::task::spawn_local(sing::run(ctx.clone()));
     tokio::task::spawn_local(face::micro_expressions(ctx.clone()));
     let call = call::Settings {
@@ -275,6 +292,11 @@ async fn run(
             Msg::Hidden(true) => presence::hide(&ctx),
             Msg::Hidden(false) => presence::show(&ctx),
             Msg::Quiet(q) => hush::set(&ctx, q).await,
+            Msg::Listening(on) => actions::listening(&ctx, on).await,
+            Msg::Act(what, payload) => {
+                let c = ctx.clone();
+                tokio::task::spawn_local(async move { actions::act(&c, &what, &payload).await });
+            }
             Msg::ClearProps => {
                 props::director::clear(&ctx).await;
             }

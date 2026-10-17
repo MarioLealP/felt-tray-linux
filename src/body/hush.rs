@@ -14,6 +14,29 @@ use super::{lines, presence, react, speech};
 /// How long to wait for her to be back on screen before the un-hush line.
 const BACK_WAIT: Duration = Duration::from_secs(30);
 
+/// The hush shortcut / "shush for 10 minutes": hushed for `minutes` (the shortcut again, or the time running
+/// out, ends it - with her line about it). Unlike the app's quiet switch she stays on screen.
+pub async fn for_minutes(ctx: &Rc<Ctx>, minutes: f64) {
+    set(ctx, true).await;
+    let c = ctx.clone();
+    let timer = tokio::task::spawn_local(async move {
+        tokio::time::sleep(Duration::from_secs_f64(minutes.max(0.0) * 60.0)).await;
+        c.hush_timer.replace(None);
+        set(&c, false).await;
+    });
+    if let Some(old) = ctx.hush_timer.replace(Some(timer)) {
+        old.abort();
+    }
+}
+
+/// Lifts a hush now (the shortcut's second press, "you can talk again").
+pub async fn lift(ctx: &Rc<Ctx>) {
+    if let Some(t) = ctx.hush_timer.replace(None) {
+        t.abort();
+    }
+    set(ctx, false).await;
+}
+
 pub async fn set(ctx: &Rc<Ctx>, quiet: bool) {
     if quiet == ctx.quiet.replace(quiet) {
         return;

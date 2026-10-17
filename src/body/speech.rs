@@ -43,6 +43,12 @@ pub fn say(
         }
         presence::show(ctx);
     }
+    if !prompted && ctx.quiet.get() {
+        // hushed: what she'd say on her own shows as a bubble, without her voice
+        let c = ctx.clone();
+        tokio::task::spawn_local(async move { c.overlay.bubble(&text, BUBBLE_MIN_S).await });
+        return;
+    }
     if let Some(f) = ctx.filler.take() {
         f.abort(); // the reply is here: no "hmm"
     }
@@ -80,6 +86,10 @@ pub async fn run(ctx: Rc<Ctx>, mut rx: mpsc::UnboundedReceiver<Sentence>) {
         }
         let cues = lipsync::cues(&ctx.rhubarb, &s.audio, &s.text).await;
         let speaking_s = cues.last().and_then(|c| c["end"].as_f64()).unwrap_or(0.0);
+        if s.reaction.is_some() {
+            ctx.last_reply
+                .replace(Some((s.audio.clone(), cues.clone())));
+        }
         let clips = match s.reaction {
             Some(r) => Some(r.settle(&ctx, speaking_s).await),
             None => None,

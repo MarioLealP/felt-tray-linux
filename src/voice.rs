@@ -64,6 +64,23 @@ impl Voice {
             .filter(|t| !t.is_empty())
     }
 
+    /// You're talking to her (the talk shortcut): she listens, then thinks.
+    pub fn listening(&self, on: bool) {
+        if let Some(b) = &self.body {
+            b.listening(on);
+        }
+    }
+
+    /// A reply's desktop action (`{"kind": "presence", "payload": {"action": ...}}`) for her body.
+    pub fn ui_action(&self, action: &serde_json::Value) {
+        if action["kind"] != "presence" {
+            return;
+        }
+        if let (Some(b), Some(what)) = (&self.body, action["payload"]["action"].as_str()) {
+            b.act(what, &action["payload"]);
+        }
+    }
+
     /// Is there a body to hide?
     pub fn has_body(&self) -> bool {
         self.body.is_some()

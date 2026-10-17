@@ -28,8 +28,13 @@ pub fn hide(ctx: &Rc<Ctx>) {
     let outcome = ctx.presence.borrow_mut().request_hide();
     tracing::info!("presence: hide ({outcome})");
     if outcome == "walk_off" {
-        start(ctx, walk_off(ctx.clone()));
+        hide_walk(ctx);
     }
+}
+
+/// The walk off screen itself (hide, or be right back once its timer is set).
+pub fn hide_walk(ctx: &Rc<Ctx>) {
+    start(ctx, walk_off(ctx.clone()));
 }
 
 pub fn show(ctx: &Rc<Ctx>) {

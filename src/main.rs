@@ -10,6 +10,7 @@ mod config;
 mod controls;
 mod core;
 mod hotkeys;
+mod mic;
 mod notices;
 mod notify;
 mod proactive;
@@ -109,6 +110,9 @@ fn main() -> Result<()> {
     let body_keys = body.clone();
     let voice = voice::Voice::new(player, body);
     let chat = chat::Chat::new(core.clone(), voice.clone(), cfg.session_id.clone());
+    let chat_keys = chat.clone();
+    // "look at this" (the shortcut) -> the screen loop
+    let (look_tx, look_rx) = tokio::sync::mpsc::unbounded_channel::<()>();
 
     let event_loop = EventLoopBuilder::<UiEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
@@ -200,7 +204,7 @@ fn main() -> Result<()> {
             session_id: cfg.session_id.clone(),
             switches: switches.clone(),
         };
-        rt.spawn(screen.run(rx));
+        rt.spawn(screen.run(rx, look_rx));
     }
 
     if cfg.hotkeys {
@@ -221,7 +225,30 @@ fn main() -> Result<()> {
                     }
                     Action::Ledge => body.iter().for_each(body::Handle::go_to_ledge),
                     Action::Clean => body.iter().for_each(body::Handle::clear_props),
-                    other => tracing::info!("hotkeys: {other:?} - not wired yet"),
+                    Action::Voice => {
+                        let chat = chat_keys.clone();
+                        tokio::spawn(async move {
+                            if let Err(e) = chat.toggle_voice().await {
+                                tracing::warn!("voice: {e:#}");
+                            }
+                        });
+                    }
+                    Action::Look => {
+                        let _ = look_tx.send(());
+                    }
+                    a => {
+                        let what = match a {
+                            Action::Hide => "hide",
+                            Action::Brb => "brb",
+                            Action::Move => "move",
+                            Action::Come => "come",
+                            Action::Repeat => "repeat",
+                            _ => "stop",
+                        };
+                        if let Some(b) = &body {
+                            b.act(what, &serde_json::Value::Null);
+                        }
+                    }
                 }
             }
         });
