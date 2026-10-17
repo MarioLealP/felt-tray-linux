@@ -44,6 +44,7 @@ pub async fn run(ctx: Rc<Ctx>, windows: watch::Receiver<Snapshot>, data_dir: std
             for name in started {
                 tracing::info!("signals: game_start({name})");
                 event(&ctx, "game_start", json!({ "name": name })).await;
+                super::props::start_event(&ctx, "game_start"); // the controller
             }
             for (name, secs) in stopped {
                 tracing::info!("signals: game_stop({name}, {secs:.0}s)");

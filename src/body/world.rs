@@ -46,6 +46,11 @@ impl World {
         self.platforms.iter().find(|p| p.id == id)
     }
 
+    /// The top-most window's (left, right) desktop px - the focused one, near enough.
+    pub fn top_window_px(&self) -> Option<(f64, f64)> {
+        self.windows.first().map(|w| (w.rect.0, w.rect.2))
+    }
+
     fn hwnd(&mut self, kwin_id: &str) -> i64 {
         let next = self.ids.len() as i64 + 1;
         *self.ids.entry(kwin_id.to_owned()).or_insert(next)
@@ -148,6 +153,15 @@ async fn update(ctx: &Rc<Ctx>, snap: &Snapshot) {
         }
         std::mem::replace(&mut w.platforms, platforms)
     };
+    let floors = |ps: &[Platform]| -> Vec<(f64, f64, f64)> {
+        ps.iter()
+            .filter(|p| p.kind == "floor")
+            .map(|p| (p.x0, p.x1, p.y))
+            .collect()
+    };
+    if floors(&previous) != floors(&ctx.world.borrow().platforms) {
+        super::props::sync_floors(ctx).await; // the props' physics floors follow the monitors'
+    }
     keep_supported(ctx, &previous).await;
 }
 

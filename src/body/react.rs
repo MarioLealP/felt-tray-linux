@@ -55,7 +55,7 @@ async fn fire(ctx: &Rc<Ctx>, key: &str) -> Option<Entry> {
     Some(picked)
 }
 
-fn pick(ctx: &Ctx, key: &str) -> Option<Entry> {
+fn pick(ctx: &Rc<Ctx>, key: &str) -> Option<Entry> {
     let entries = ctx.assets.reactions.get(key)?;
     let mood: HashMap<String, f64> = {
         let mut m = ctx.mood.borrow_mut();
@@ -65,6 +65,10 @@ fn pick(ctx: &Ctx, key: &str) -> Option<Entry> {
     let last = ctx.last_pick.borrow().get(key).cloned();
     let mut rng = StdRng::from_rng(&mut rand::rng());
     let picked = pick_reaction(entries, &mood, last.as_deref(), &mut rng)?.clone();
+    if let Some(item) = picked.get("prop").and_then(Value::as_str) {
+        // the row's prop (afk_start's book ...): its "reaction:<item>" episode, in the background
+        super::props::start_event(ctx, &format!("reaction:{item}"));
+    }
     ctx.last_pick
         .borrow_mut()
         .insert(key.to_owned(), entry_key(&picked));

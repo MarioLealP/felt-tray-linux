@@ -36,8 +36,12 @@ pub async fn stand_up_if_sitting(ctx: &Ctx) {
         return;
     }
     if ctx.assets.tags.contains(SIT_TO_STAND) {
+        // off a real chair with the clip that fits its seat
+        let fit: Option<std::collections::HashMap<String, String>> =
+            super::props::director::stand_up_clip(ctx)
+                .map(|c| [(SIT_TO_STAND.to_owned(), c)].into());
         ctx.behavior
-            .run_sequence(&[SIT_TO_STAND], CLIP_TIMEOUT_S, None)
+            .run_sequence(&[SIT_TO_STAND], CLIP_TIMEOUT_S, fit.as_ref())
             .await;
     }
     ctx.behavior.set_posture("standing");

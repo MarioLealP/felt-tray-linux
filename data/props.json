@@ -1,0 +1,889 @@
+{
+  "_doc": "WP-21 props manifest - the one source for props. items: what main.gd renders (model in felt-godot-overlay/props/models/, size in m = height, or the longest side with fit=max; rotate = degrees applied before sizing; grip = offset per bone in the skeleton's rest frame, pos m / rot deg; physics roll|box; static = never knocked around) plus decisions (big = conjured, z = depth on the floor: + is behind her, - in front). clips: clip -> prop (tag:clip for one clip inside a mixed tag folder). events: signal/time/weather key -> an episode. sequences: the step lists (tag + a timed cue, chest open/close, wait). sit: the chair and the sit clips whose hip height matches its seat. hand_dx: where she stands relative to a prop for each action. World units: world +x is screen LEFT.",
+  "max_placed": 6,
+  "tidy_after_hours": 3,
+  "floor_z": -0.25,
+  "conjure_distance_m": 3.0,
+  "throw_distance_m": 1.4,
+  "kick_impulse": 2.4,
+  "chest": {
+    "_doc": "WP-22: its home is DISPLAY2's floor. desktop_x = virtual-desktop pixel (DISPLAY2 spans 3440-5360; 5072 = 85 % across it), mapped through the overlay's own pixel map; x (world m) is the fallback if the map is unknown. Clamped to edge_inset_m inside the floor, so with DISPLAY2 unplugged it lands at the primary's right end.",
+    "item": "chest",
+    "desktop_x": 5072,
+    "x": -4.6,
+    "z": -0.26,
+    "yaw": 0
+  },
+  "hand_dx": {
+    "fetch": 0.03,
+    "fetch_left": 0.02,
+    "pickup": 0.03,
+    "pickup_left": 0.02,
+    "put_down": 0.03,
+    "put_down_left": 0.02,
+    "kick": 0.05
+  },
+  "items": {
+    "chest": {
+      "model": "chest.glb",
+      "size": 0.17,
+      "rotate": [
+        0,
+        90,
+        0
+      ],
+      "static": true,
+      "lid": {
+        "node": "lid",
+        "open_deg": -100
+      }
+    },
+    "chair": {
+      "model": "chair.glb",
+      "size": 0.85,
+      "rotate": [
+        0,
+        180,
+        0
+      ],
+      "static": true,
+      "big": true,
+      "z": 0.26,
+      "spacing": 1.1,
+      "stretch": [
+        1,
+        1,
+        0.5
+      ]
+    },
+    "beanbag": {
+      "model": "beanbag.glb",
+      "size": 0.55,
+      "static": true,
+      "big": true,
+      "z": 0.4,
+      "spacing": 0.9
+    },
+    "mug": {
+      "model": "mug.glb",
+      "size": 0.1,
+      "physics": "roll",
+      "mass": 0.3,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            -0.1,
+            -0.045,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            -90
+          ]
+        }
+      }
+    },
+    "book": {
+      "model": "book.glb",
+      "size": 0.24,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.5,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            -0.08,
+            -0.04,
+            0
+          ],
+          "rot": [
+            90,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "phone": {
+      "model": "phone.glb",
+      "size": 0.15,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            -0.06,
+            -0.04,
+            0
+          ],
+          "rot": [
+            90,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "headphones": {
+      "model": "headphones.glb",
+      "size": 0.3,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.3,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            0.0,
+            -0.03,
+            0.04
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        },
+        "Head": {
+          "pos": [
+            0,
+            0.04,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "umbrella": {
+      "model": "umbrella.glb",
+      "size": 0.8,
+      "physics": "box",
+      "mass": 0.5,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            -0.72,
+            -0.03,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            -90
+          ]
+        }
+      }
+    },
+    "sunglasses": {
+      "model": "sunglasses.glb",
+      "size": 0.14,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.1,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            0.0,
+            -0.02,
+            0.04
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        },
+        "Head": {
+          "pos": [
+            0,
+            0.065,
+            0.085
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "blanket": {
+      "model": "blanket.glb",
+      "size": 1.1,
+      "fit": "max",
+      "static": true,
+      "big": true,
+      "z": 0.35,
+      "spacing": 1.0,
+      "rotate": [
+        0,
+        90,
+        0
+      ]
+    },
+    "pillow": {
+      "model": "pillow.glb",
+      "size": 0.45,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.4,
+      "big": true,
+      "z": 0.3,
+      "spacing": 0.6,
+      "rotate": [
+        -90,
+        0,
+        0
+      ]
+    },
+    "desk_lamp": {
+      "model": "desk_lamp.glb",
+      "size": 0.45,
+      "static": true,
+      "big": true,
+      "z": 0.4,
+      "spacing": 0.6
+    },
+    "potted_plant": {
+      "model": "potted_plant.glb",
+      "size": 0.55,
+      "static": true,
+      "big": true,
+      "z": 0.45,
+      "spacing": 0.6
+    },
+    "controller": {
+      "model": "controller.glb",
+      "size": 0.15,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.25,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            -0.07,
+            -0.04,
+            0
+          ],
+          "rot": [
+            90,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "snack_bag": {
+      "model": "snack_bag.glb",
+      "size": 0.2,
+      "physics": "box",
+      "mass": 0.15,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            -0.05,
+            -0.05,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            -90
+          ]
+        }
+      }
+    },
+    "water_bottle": {
+      "model": "water_bottle.glb",
+      "size": 0.22,
+      "physics": "roll",
+      "mass": 0.3,
+      "grip": {
+        "LeftHand": {
+          "pos": [
+            0.06,
+            -0.04,
+            0
+          ],
+          "rot": [
+            0,
+            90,
+            90
+          ]
+        },
+        "RightHand": {
+          "pos": [
+            -0.1,
+            -0.045,
+            0.0
+          ],
+          "rot": [
+            0,
+            0,
+            -90
+          ]
+        }
+      }
+    },
+    "backpack": {
+      "model": "backpack.glb",
+      "size": 0.32,
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Chest": {
+          "pos": [
+            0.0,
+            -0.12,
+            -0.16
+          ],
+          "rot": [
+            0.0,
+            90.0,
+            0.0
+          ]
+        }
+      }
+    },
+    "bunny_ears": {
+      "model": "bunny_ears.glb",
+      "size": 0.16,
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Head": {
+          "pos": [
+            0,
+            0.17,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "cap": {
+      "model": "cap.glb",
+      "size": 0.4,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Head": {
+          "pos": [
+            0.0,
+            0.145,
+            0.065
+          ],
+          "rot": [
+            -6.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    "cat_ears": {
+      "model": "cat_ears.glb",
+      "size": 0.2,
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Head": {
+          "pos": [
+            0.0,
+            0.075,
+            0.0
+          ],
+          "rot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    "choker": {
+      "model": "choker.glb",
+      "size": 0.09,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Neck": {
+          "pos": [
+            0.0,
+            0.015,
+            0.005
+          ],
+          "rot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    "crossbody_bag": {
+      "model": "crossbody_bag.glb",
+      "size": 0.56,
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Hips": {
+          "pos": [
+            0.195,
+            -0.085,
+            0.01
+          ],
+          "rot": [
+            5.0,
+            190.0,
+            -25.0
+          ]
+        }
+      }
+    },
+    "hair_flower": {
+      "model": "hair_flower.glb",
+      "size": 0.09,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Head": {
+          "pos": [
+            0.065,
+            0.16,
+            0.03
+          ],
+          "rot": [
+            0.0,
+            0.0,
+            -50.0
+          ]
+        }
+      }
+    },
+    "ice_cream": {
+      "model": "ice_cream.glb",
+      "size": 0.16,
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "RightHand": {
+          "pos": [
+            -0.06,
+            -0.035,
+            -0.05
+          ],
+          "rot": [
+            0.0,
+            -105.0,
+            -90.0
+          ]
+        }
+      }
+    },
+    "necklace": {
+      "model": "necklace.glb",
+      "size": 0.12,
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Neck": {
+          "pos": [
+            0,
+            -0.11,
+            0.11
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "round_glasses": {
+      "model": "round_glasses.glb",
+      "size": 0.15,
+      "fit": "max",
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Head": {
+          "pos": [
+            0.0,
+            0.015,
+            0.045
+          ],
+          "rot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    "santa_hat": {
+      "model": "santa_hat.glb",
+      "size": 0.27,
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Head": {
+          "pos": [
+            0.0,
+            0.145,
+            -0.035
+          ],
+          "rot": [
+            0.0,
+            190.0,
+            0.0
+          ]
+        }
+      }
+    },
+    "witch_hat": {
+      "model": "witch_hat.glb",
+      "size": 0.36,
+      "physics": "box",
+      "mass": 0.2,
+      "grip": {
+        "Head": {
+          "pos": [
+            0.0,
+            0.15,
+            0.0
+          ],
+          "rot": [
+            -8.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  },
+  "clips": {
+    "ambient:drink_water": {
+      "item": "water_bottle",
+      "bone": "LeftHand",
+      "from_floor": true,
+      "tag": "ambient",
+      "clip": "drink_water",
+      "start": 3.3,
+      "end": 19.8,
+      "after": "put_down"
+    },
+    "ambient:check_phone": {
+      "item": "phone",
+      "bone": "RightHand",
+      "after": "put_down"
+    },
+    "ambient/phone_call": {
+      "item": "phone",
+      "bone": "RightHand",
+      "after": "put_down"
+    },
+    "ambient/snack": {
+      "item": "snack_bag",
+      "bone": "LeftHand",
+      "after": "put_down"
+    },
+    "reaction/listening:listening_to_music": {
+      "item": "headphones",
+      "bone": "Head",
+      "conjure": true,
+      "after": "put_down"
+    }
+  },
+  "events": {
+    "music_start": {
+      "item": "headphones",
+      "bone": "Head",
+      "conjure": true,
+      "tag": "reaction/listening",
+      "clip": "listening_to_music",
+      "after": "keep"
+    },
+    "game_start": {
+      "item": "controller",
+      "bone": "RightHand",
+      "hold_s": 20,
+      "after": "put_down"
+    },
+    "weather:rain": {
+      "item": "umbrella",
+      "bone": "RightHand",
+      "hold_s": 25,
+      "after": "dismiss"
+    },
+    "time:evening": {
+      "item": "desk_lamp",
+      "place": true
+    },
+    "time:late_night": {
+      "item": "blanket",
+      "place": true,
+      "also": {
+        "item": "pillow",
+        "place": true
+      }
+    },
+    "reaction:book": {
+      "item": "book",
+      "bone": "RightHand",
+      "hold_s": 12,
+      "after": "put_down"
+    },
+    "drink:bottle": {
+      "item": "water_bottle",
+      "bone": "LeftHand",
+      "from_floor": true,
+      "tag": "ambient",
+      "clip": "drink_water",
+      "start": 3.3,
+      "end": 19.8,
+      "after": "put_down"
+    },
+    "reaction:water_bottle": {
+      "item": "water_bottle",
+      "bone": "LeftHand",
+      "from_floor": true,
+      "tag": "ambient",
+      "clip": "drink_water",
+      "start": 3.3,
+      "end": 19.8,
+      "after": "put_down"
+    }
+  },
+  "sit": {
+    "item": "chair",
+    "seat_offset": [
+      0.0,
+      0.26
+    ],
+    "_doc": "Only the UAL sit set shares one hip height (joint 0.515 m, 0.25 m behind her pivot): enter 0.51/0.25, idle loop 0.515/0.247, exit 0.51/0.25. The other seated idles sit 0.575-0.66 m high and/or 0.28 m further forward, female_act_sit_on_chair ends at 0.46/0.34 - measured in-engine, WP-21 notes.",
+    "clips": {
+      "transition/stand_to_sit": [
+        "ual1_sitting_enter"
+      ],
+      "idle/sitting": [
+        "ual1_sitting_idle_loop"
+      ],
+      "transition/sit_to_stand": [
+        "ual1_sitting_exit"
+      ]
+    }
+  },
+  "sequences": {
+    "fetch": [
+      {
+        "chest": "open"
+      },
+      {
+        "wait": 0.35
+      },
+      {
+        "tag": "prop/pickup_right",
+        "cue": {
+          "at": 0.5,
+          "do": "take"
+        }
+      },
+      {
+        "chest": "close"
+      }
+    ],
+    "fetch_left": [
+      {
+        "chest": "open"
+      },
+      {
+        "wait": 0.35
+      },
+      {
+        "tag": "prop/pickup_left",
+        "cue": {
+          "at": 0.5,
+          "do": "take"
+        }
+      },
+      {
+        "chest": "close"
+      }
+    ],
+    "pickup": [
+      {
+        "tag": "prop/pickup_right",
+        "cue": {
+          "at": 0.8,
+          "do": "grab"
+        }
+      }
+    ],
+    "pickup_left": [
+      {
+        "tag": "prop/pickup_left",
+        "cue": {
+          "at": 0.78,
+          "do": "grab"
+        }
+      }
+    ],
+    "put_down": [
+      {
+        "tag": "prop/pickup_right",
+        "cue": {
+          "at": 0.8,
+          "do": "place"
+        }
+      }
+    ],
+    "put_down_left": [
+      {
+        "tag": "prop/pickup_left",
+        "cue": {
+          "at": 0.78,
+          "do": "place"
+        }
+      }
+    ],
+    "conjure": [
+      {
+        "tag": "ambient/look_around",
+        "clip": "lookaround_face"
+      },
+      {
+        "tag": "gesture/pointing",
+        "clip": "pointing",
+        "cue": {
+          "at": 0.7,
+          "do": "conjure"
+        }
+      }
+    ],
+    "throw": [
+      {
+        "chest": "open"
+      },
+      {
+        "tag": "prop/throw_left",
+        "cue": {
+          "at": 0.45,
+          "do": "release"
+        }
+      },
+      {
+        "wait": 0.5
+      },
+      {
+        "chest": "close"
+      }
+    ],
+    "stash_left": [
+      {
+        "chest": "open"
+      },
+      {
+        "wait": 0.35
+      },
+      {
+        "tag": "prop/pickup_left",
+        "cue": {
+          "at": 0.78,
+          "do": "stash"
+        }
+      },
+      {
+        "chest": "close"
+      }
+    ],
+    "kick": [
+      {
+        "tag": "prop/kick",
+        "cue": {
+          "at": 0.8,
+          "do": "push"
+        }
+      }
+    ]
+  },
+  "accessories": {
+    "_doc": "WP-32: worn accessories (accessories.py). One item per slot - hats and ear headbands share 'hat', two bags never together (Mario, 2026-10-01). tags pick ambient wearing: cute = happy/affectionate, summer = sunny daytime, evening = after 18:00, casual = any time; halloween/xmas items only come with their outfits.",
+    "slots": {
+      "hat": [
+        "witch_hat",
+        "santa_hat",
+        "cap",
+        "cat_ears",
+        "bunny_ears"
+      ],
+      "hair": [
+        "hair_flower"
+      ],
+      "face": [
+        "round_glasses",
+        "sunglasses"
+      ],
+      "neck": [
+        "choker",
+        "necklace"
+      ],
+      "bag": [
+        "backpack",
+        "crossbody_bag"
+      ]
+    },
+    "tags": {
+      "cap": [
+        "summer"
+      ],
+      "cat_ears": [
+        "cute"
+      ],
+      "bunny_ears": [
+        "cute"
+      ],
+      "hair_flower": [
+        "cute",
+        "summer"
+      ],
+      "round_glasses": [
+        "evening"
+      ],
+      "sunglasses": [
+        "summer"
+      ],
+      "choker": [
+        "evening"
+      ],
+      "necklace": [
+        "evening"
+      ],
+      "backpack": [
+        "casual"
+      ],
+      "crossbody_bag": [
+        "casual"
+      ],
+      "witch_hat": [
+        "halloween"
+      ],
+      "santa_hat": [
+        "xmas"
+      ]
+    }
+  }
+}

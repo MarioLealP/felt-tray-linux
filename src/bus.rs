@@ -70,6 +70,13 @@ impl FeltBus {
             .send_event(UiEvent::ShowChat);
     }
 
+    /// Her body: clean house - every prop on the floor or in her hands dissolves.
+    fn clear_props(&self) {
+        if let Some(b) = &self.body {
+            b.clear_props();
+        }
+    }
+
     /// Her body: go to the window ledge nearest the cursor and sit on it (bind it to a shortcut).
     fn go_to_ledge(&self) {
         if let Some(b) = &self.body {

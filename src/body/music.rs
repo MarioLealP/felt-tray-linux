@@ -98,6 +98,18 @@ pub async fn run(ctx: Rc<Ctx>, capture: Vec<String>) {
         }
         for event in events.update(locked, energy) {
             tracing::info!("music: {event}");
+            match event {
+                "music_start" => {
+                    super::props::start_event(&ctx, "music_start"); // headphones on
+                }
+                "music_stop" if ctx.props.store.borrow().held_id("headphones").is_some() => {
+                    let c = ctx.clone();
+                    tokio::task::spawn_local(async move {
+                        super::props::director::take_off(&c, "headphones").await;
+                    });
+                }
+                _ => {}
+            }
             if presence::visible(&ctx) && !ctx.behavior.busy() {
                 react::reaction(&ctx, event).await;
             }

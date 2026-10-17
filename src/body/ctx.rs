@@ -57,6 +57,9 @@ pub struct Ctx {
     /// The cursor's desktop position, as gaze last saw it.
     pub cursor: Cell<Option<(f64, f64)>>,
     pub outfits: super::outfits::Outfits,
+    pub props: super::props::Props,
+    /// The overlay's animation library (one folder per tag): which clips a tag has.
+    pub animations: std::path::PathBuf,
     /// Her grumbles when a window drops her (window_events.rs).
     pub grumbles: super::window_events::Grumbles,
     /// A pose holds her face until then (micro-expressions wait).

@@ -14,7 +14,7 @@ use super::clock;
 use super::ctx::{CLIP_TIMEOUT_S, Ctx};
 use super::moves::{self, RUN_TAG, SITTING_IDLE, WALK_TAG};
 use super::presence;
-use super::{ledge, nav, outfits};
+use super::{ledge, nav, outfits, props};
 
 /// How far from a monitor's middle an ambient walk goes (world m), and how often it crosses monitors.
 const ROAM_REACH_M: f64 = 2.0;
@@ -31,8 +31,12 @@ pub async fn idle_refresh(ctx: Rc<Ctx>) {
         } else {
             "idle"
         };
+        // on a real chair: a seated idle whose hips fit its seat
+        let fit = (tag == SITTING_IDLE && ctx.props.seated_on.borrow().is_some())
+            .then(|| props::director::sit_clip(&ctx, SITTING_IDLE))
+            .flatten();
         if ctx.assets.tags.contains(tag) {
-            ctx.overlay.play_tag(tag, false, None).await;
+            ctx.overlay.play_tag(tag, false, fit.as_deref()).await;
         }
     }
 }
@@ -64,6 +68,7 @@ pub async fn run(ctx: Rc<Ctx>) {
             sitting(&ctx, pick(&w)).await;
         } else {
             let mut w = scale(standing_weights(hour), boredom, energy);
+            w.extend(props::ambient_weights(&ctx, hour, &mood));
             // WP-16: a dance now and then while real music plays and she's up for it
             if ctx.tempo_locked.get()
                 && ctx.assets.tags.contains("dance")
@@ -111,11 +116,23 @@ async fn standing(ctx: &Rc<Ctx>, action: &str, mood: &BTreeMap<String, f64>) {
         "idle_variety" => {
             ctx.overlay.play_tag("idle", false, None).await;
         }
-        "ambient_action" => play_one_of(ctx, &tags_under(ctx, "ambient")).await,
+        "ambient_action" => play_with_props(ctx, &tags_under(ctx, "ambient")).await,
         "sleepy" => play_one_of(ctx, &tags_under(ctx, "sleepy")).await,
         "walk" if ctx.assets.tags.contains(WALK_TAG) => walk(ctx, mood).await,
         "sit_down" => {
-            moves::sit_down(ctx).await;
+            // on a real chair when there's one to sit on (walked to, or conjured behind her)
+            if !(ctx.props.enabled() && props::director::sit_down(ctx).await) {
+                moves::sit_down(ctx).await;
+            }
+        }
+        "tidy" => {
+            props::director::tidy_one(ctx).await;
+        }
+        "kick" => {
+            props::director::kick_one(ctx).await;
+        }
+        e if e.starts_with("prop_event:") => {
+            props::start_event(ctx, &e["prop_event:".len()..]);
         }
         "dance" => play_one_of(ctx, &["dance".to_owned()]).await,
         "surprise" => {
@@ -126,7 +143,7 @@ async fn standing(ctx: &Rc<Ctx>, action: &str, mood: &BTreeMap<String, f64>) {
                 .filter(|t| *t == "dance" || *t == "greeting" || t.starts_with("reaction/"))
                 .cloned()
                 .collect();
-            play_one_of(ctx, &picks).await;
+            play_with_props(ctx, &picks).await;
         }
         _ => {}
     }
@@ -148,6 +165,14 @@ async fn sitting(ctx: &Ctx, action: &str) {
         }
         _ => {}
     }
+}
+
+/// One of `tags`, with its prop when its clip needs one.
+async fn play_with_props(ctx: &Rc<Ctx>, tags: &[String]) {
+    let Some(tag) = tags.choose(&mut rand::rng()).cloned() else {
+        return;
+    };
+    props::play_with_props(ctx, &tag, &ctx.animations).await;
 }
 
 async fn play_one_of(ctx: &Ctx, tags: &[String]) {

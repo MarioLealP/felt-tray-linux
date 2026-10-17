@@ -34,6 +34,25 @@ impl Overlay {
         }
     }
 
+    /// Like [`Overlay::play_and_wait`] from `start` s into the clip (a segment: the mug sip of drink_water).
+    pub async fn play_segment(&self, tag: &str, timeout: Duration, clip: Option<&str>, start: f64) {
+        if start <= 0.0 {
+            return self.play_and_wait(tag, timeout, clip).await;
+        }
+        let mut rx = self.subscribe();
+        let mut m = json!({ "tag": tag, "start": start });
+        if let Some(c) = clip {
+            m["clip"] = c.into();
+        }
+        if !self.send(&m).await {
+            return;
+        }
+        let finished = |m: &Value| m.get("finished").and_then(Value::as_str) == Some(tag);
+        if wait_for(&mut rx, timeout, finished).await.is_none() {
+            tracing::warn!("no finished notice for '{tag}' within {timeout:?} - continuing");
+        }
+    }
+
     /// Walk to world x. `offscreen` lets her leave the visible frame (hide/brb); `running` = run speed.
     pub async fn move_to(&self, x: f64, offscreen: bool, running: bool) -> bool {
         let mut m = json!({ "x": x });

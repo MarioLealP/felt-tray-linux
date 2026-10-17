@@ -22,6 +22,7 @@ mod nav;
 mod outfits;
 mod overlay;
 mod presence;
+mod props;
 mod react;
 mod reply;
 mod signals;
@@ -66,6 +67,8 @@ enum Msg {
     Quiet(bool),
     /// Onto the ledge nearest the cursor, and sit.
     GoToLedge,
+    /// Clean house: every prop dissolves.
+    ClearProps,
 }
 
 /// felt-tray's side of her body. Cheap to clone; every call returns at once.
@@ -101,6 +104,10 @@ impl Handle {
     /// The hide switch: she walks off screen (true) or comes back (false).
     pub fn set_hidden(&self, hidden: bool) {
         let _ = self.tx.send(Msg::Hidden(hidden));
+    }
+
+    pub fn clear_props(&self) {
+        let _ = self.tx.send(Msg::ClearProps);
     }
 
     pub fn go_to_ledge(&self) {
@@ -177,6 +184,7 @@ async fn run(
     let mood_path = state_dir.join("mood.json");
     let wardrobe_path = outfits::wardrobe_path(&state_dir);
     let outfits = outfits::Outfits::load(&cfg.data_dir, &wardrobe_path, cfg.outfit_ambient_chance);
+    let props = props::Props::load(&cfg.data_dir, &state_dir);
     let events = events::Events::start(core.clone(), state_dir.join("day_start.json"));
     let (sentences, queue) = mpsc::unbounded_channel();
     let ctx = Rc::new(Ctx {
@@ -204,6 +212,8 @@ async fn run(
         tempo_locked: Cell::new(false),
         world: RefCell::new(world::World::default()),
         outfits,
+        props,
+        animations: cfg.animations.clone(),
         face_held_until: Cell::new(Instant::now()),
         grumbles: window_events::Grumbles::default(),
         filler: RefCell::new(None),
@@ -251,6 +261,9 @@ async fn run(
             Msg::Hidden(true) => presence::hide(&ctx),
             Msg::Hidden(false) => presence::show(&ctx),
             Msg::Quiet(q) => hush::set(&ctx, q).await,
+            Msg::ClearProps => {
+                props::director::clear(&ctx).await;
+            }
             Msg::GoToLedge => {
                 let c = ctx.clone();
                 tokio::task::spawn_local(async move { nav::go_to_ledge(&c).await });
@@ -268,8 +281,12 @@ async fn overlay_events(ctx: Rc<Ctx>) {
             Ok(Event::Connected) => {
                 ctx.overlay.play_tag("idle", false, None).await;
                 outfits::on_connected(&ctx).await;
+                props::director::on_connected(&ctx).await;
             }
-            Ok(Event::Message(m)) => outfits::on_message(&ctx, &m).await,
+            Ok(Event::Message(m)) => {
+                outfits::on_message(&ctx, &m).await;
+                props::on_message(&ctx, &m);
+            }
             Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
             Err(_) => return,
         }
