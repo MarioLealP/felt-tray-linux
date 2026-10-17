@@ -131,7 +131,14 @@ impl Screen {
 
         match self
             .core
-            .react_screen(jpeg, &target.app, &target.title, trigger, &self.session_id)
+            .react_screen(
+                jpeg,
+                &target.app,
+                &target.title,
+                trigger,
+                &self.session_id,
+                self.voice.tone(),
+            )
             .await
         {
             Ok(Some(reply)) => {

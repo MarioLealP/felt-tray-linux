@@ -65,11 +65,17 @@ impl FeltCore {
         Ok(c)
     }
 
-    pub async fn text_chat(&self, message: &str, session_id: &str) -> Result<Reply> {
+    /// `tone`: her body's mood/time-of-day line, which felt-core adds to her prompt (WP-15).
+    pub async fn text_chat(
+        &self,
+        message: &str,
+        session_id: &str,
+        tone: Option<String>,
+    ) -> Result<Reply> {
         let r = self
             .client()?
             .post(format!("{}/v1/text-chat", self.base))
-            .json(&json!({ "message": message, "session_id": session_id }))
+            .json(&json!({ "message": message, "session_id": session_id, "tone": tone }))
             .send()
             .await?;
         if !r.status().is_success() {
@@ -151,6 +157,7 @@ impl FeltCore {
         title: &str,
         trigger: &str,
         session_id: &str,
+        tone: Option<String>,
     ) -> Result<Option<Reply>> {
         let image = reqwest::multipart::Part::bytes(jpeg)
             .file_name("screen.jpg")
@@ -160,6 +167,10 @@ impl FeltCore {
             .text("app", app.to_owned())
             .text("title", title.to_owned())
             .text("trigger", trigger.to_owned());
+        let form = match tone {
+            Some(t) => form.text("tone", t),
+            None => form,
+        };
         let r = self
             .client()?
             .post(format!(

@@ -56,6 +56,14 @@ impl Voice {
         }
     }
 
+    /// Her body's tone line (mood, time of day, recent emotions) for felt-core; None without a body.
+    pub fn tone(&self) -> Option<String> {
+        self.body
+            .as_ref()
+            .map(body::Handle::tone)
+            .filter(|t| !t.is_empty())
+    }
+
     /// Is there a body to hide?
     pub fn has_body(&self) -> bool {
         self.body.is_some()

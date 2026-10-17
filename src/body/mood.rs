@@ -30,7 +30,8 @@ pub fn load(path: &Path) -> Mood {
     )
 }
 
-pub async fn run(ctx: Rc<Ctx>, path: PathBuf) {
+/// `tone`: where her current tone line is published for felt-tray's chat and screen reactions.
+pub async fn run(ctx: Rc<Ctx>, path: PathBuf, tone: std::sync::Arc<std::sync::Mutex<String>>) {
     let mut tick = tokio::time::interval(TICK);
     let mut events = ctx.overlay.subscribe();
     let mut sent: Option<Value> = None;
@@ -44,6 +45,7 @@ pub async fn run(ctx: Rc<Ctx>, path: PathBuf) {
                     m.tick();
                     m.as_dict()
                 };
+                *tone.lock().expect("tone lock") = super::react::tone(&ctx);
                 if let Err(e) = felt_mood::save_mood_state(&values, &path) {
                     tracing::warn!("couldn't save her mood: {e}");
                 }

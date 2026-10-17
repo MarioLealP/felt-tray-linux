@@ -33,7 +33,10 @@ impl Chat {
         let token = self.generation.fetch_add(1, Ordering::SeqCst) + 1;
         self.voice.player().stop();
         self.voice.thinking();
-        let reply = self.core.text_chat(message, &self.session_id).await?;
+        let reply = self
+            .core
+            .text_chat(message, &self.session_id, self.voice.tone())
+            .await?;
         tracing::info!(
             chars = reply.text.len(),
             streamed = reply.stream.is_some(),

@@ -76,6 +76,8 @@ enum Msg {
 #[derive(Clone)]
 pub struct Handle {
     tx: mpsc::UnboundedSender<Msg>,
+    /// Her tone line, refreshed by her mood loop (read from felt-tray's other threads).
+    tone: Arc<std::sync::Mutex<String>>,
 }
 
 impl Handle {
@@ -109,6 +111,10 @@ impl Handle {
 
     pub fn clear_props(&self) {
         let _ = self.tx.send(Msg::ClearProps);
+    }
+
+    pub fn tone(&self) -> String {
+        self.tone.lock().expect("tone lock").clone()
     }
 
     pub fn go_to_ledge(&self) {
@@ -151,6 +157,8 @@ pub fn start(
     windows: Windows,
 ) -> Result<Handle> {
     let (tx, rx) = mpsc::unbounded_channel();
+    let tone: Arc<std::sync::Mutex<String>> = Arc::default();
+    let tone_out = tone.clone();
     let cfg = cfg.clone();
     std::thread::Builder::new()
         .name("felt-body".into())
@@ -159,11 +167,11 @@ pub fn start(
                 .enable_all()
                 .build()
                 .expect("her body's runtime");
-            let body = run(cfg, core, player, cursor, windows, rx);
+            let body = run(cfg, core, player, cursor, windows, rx, tone_out);
             tokio::task::LocalSet::new().block_on(&rt, body);
         })
         .context("can't start her body's thread")?;
-    Ok(Handle { tx })
+    Ok(Handle { tx, tone })
 }
 
 async fn run(
@@ -173,6 +181,7 @@ async fn run(
     cursor: Cursor,
     windows: Windows,
     mut rx: mpsc::UnboundedReceiver<Msg>,
+    tone: Arc<std::sync::Mutex<String>>,
 ) {
     let o = Arc::new(Overlay::new());
     tokio::spawn(overlay::supervisor::run(
@@ -226,7 +235,7 @@ async fn run(
         streak: RefCell::new(Vec::new()),
     });
     tokio::task::spawn_local(overlay_events(ctx.clone()));
-    tokio::task::spawn_local(mood::run(ctx.clone(), mood_path));
+    tokio::task::spawn_local(mood::run(ctx.clone(), mood_path, tone));
     tokio::task::spawn_local(weather::run(ctx.clone()));
     tokio::task::spawn_local(face::micro_expressions(ctx.clone()));
     let call = call::Settings {
