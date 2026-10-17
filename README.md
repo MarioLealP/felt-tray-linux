@@ -75,8 +75,12 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   swaps; `tees`: the day's approved tee; state in `$XDG_DATA_HOME/felt-tray/wardrobe.json`). **Face life**
   (micro-expressions, brow raises on her voice's peaks) and a filler "hmm" 1.5 s into a slow reply. **Calls**
   (`call_apps`: mic open = on a call): her voice ducks `duck_db` while someone talks.
+- **Props** (data/props.json): her chest, things she fetches or conjures (a controller when a game starts,
+  headphones with music, the phone, a water bottle, an evening lamp, a late-night blanket), clutter she tidies
+  or kicks, a chair she sits on; placed items persist in `$XDG_DATA_HOME/felt-tray/placed_props.json`; D-Bus
+  `ClearProps()` = clean house. Windows: she rides a dragged one and grumbles when hers goes.
 - **Not yet**: push-to-talk (GlobalShortcuts portal), the raw-ntfy fallback when felt-core is down; for her body
-  props, key-mash, mouth-along, accessories. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
+  key-mash, mouth-along, accessories, weather props. Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
 
-Modules: `config` · `core` (felt-core client) · `chat` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`, `world`, `nav`, `ledge`, `outfits`, `tees`, `face`, `lines`, `call`).
+Modules: `config` · `core` (felt-core client) · `chat` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`, `world`, `nav`, `ledge`, `outfits`, `tees`, `face`, `lines`, `call`, `window_events`, `props`).
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).
