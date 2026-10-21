@@ -55,11 +55,23 @@ criteria = "safe-to-deploy"
 version = "1.13.1"
 notes = "rust-lang/regex; 1 unsafe; no build.rs/process/net/fs."
 
+[[audits.rustls-webpki]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.103.15 -> 0.103.16"
+notes = "Delta only: RUSTSEC-2026-0382 fix - a const list of distrusted emSign intermediate SPKIs (include_bytes! data) checked during chain building, new Error::CertDistrusted, tests. No unsafe, IO or build script."
+
 [[audits.unicase]]
 who = "Benylin <lealmariop@gmail.com>"
 criteria = "safe-to-deploy"
 version = "2.10.0"
 notes = "seanmonstar case-insensitive strings; no unsafe, no build.rs/process/net/fs."
+
+[[audits.webpki-root-certs]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.9 -> 1.0.10"
+notes = "Delta only: emSign roots removed from the embedded certificate list (data), rust-version 1.70 -> 1.71. No code logic, unsafe or IO."
 
 [[audits.zune-core]]
 who = "Benylin <lealmariop@gmail.com>"
