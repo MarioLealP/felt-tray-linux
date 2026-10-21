@@ -65,7 +65,8 @@ impl FeltCore {
         let c = Client::builder()
             .identity(Identity::from_pem(&pem).context("bad client bundle")?)
             .connect_timeout(Duration::from_secs(10))
-            .timeout(Duration::from_secs(90))
+            // above felt-core's 150 s LLM timeout: a cold prompt is ~100 s
+            .timeout(Duration::from_secs(180))
             .build()?;
         *slot = Some((mtime, c.clone()));
         Ok(c)
