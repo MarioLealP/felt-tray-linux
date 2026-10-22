@@ -49,7 +49,7 @@ felt-world = { path = "crates/world" }
 
 anyhow = "1.0.104"
 futures-util = { version = "0.3.34", default-features = false }
-getrandom = "0.4"
+getrandom = "0.4.3"
 image = { version = "0.25.10", default-features = false, features = ["jpeg"] }
 ksni = "0.3.6"
 png = "0.18.1"
