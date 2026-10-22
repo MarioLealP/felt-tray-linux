@@ -39,20 +39,20 @@ impl Manifest {
 
     pub fn is_big(&self, item: &str) -> bool {
         self.item(item)
-            .and_then(|e| e["big"].as_bool())
+            .and_then(|e| e.get("big")?.as_bool())
             .unwrap_or(false)
     }
 
     pub fn is_static(&self, item: &str) -> bool {
         self.item(item)
-            .and_then(|e| e["static"].as_bool())
+            .and_then(|e| e.get("static")?.as_bool())
             .unwrap_or(false)
     }
 
     /// The floor depth an item is put down at.
     pub fn z_for(&self, item: &str) -> f64 {
         self.item(item)
-            .and_then(|e| e["z"].as_f64())
+            .and_then(|e| e.get("z")?.as_f64())
             .unwrap_or_else(|| self.f("floor_z", -0.25))
     }
 

@@ -25,7 +25,9 @@ pub struct Reply {
     pub ui_action: Option<serde_json::Value>,
     pub text: String,
     pub audio: Vec<u8>,
-    pub stream: Option<(String, u32)>,
+    /// A streamed reply: its id and chunk count - `None` = open (protocol v2: felt-core is still writing
+    /// it, play chunks until it says done).
+    pub stream: Option<(String, Option<u32>)>,
     /// A skill's animation tag (e.g. `reaction/weather/storm`), when one fired.
     pub tag: Option<String>,
     /// Her emotion, on screen reactions.
@@ -63,7 +65,8 @@ impl FeltCore {
         let c = Client::builder()
             .identity(Identity::from_pem(&pem).context("bad client bundle")?)
             .connect_timeout(Duration::from_secs(10))
-            .timeout(Duration::from_secs(90))
+            // above felt-core's 150 s LLM timeout: a cold prompt is ~100 s
+            .timeout(Duration::from_secs(180))
             .build()?;
         *slot = Some((mtime, c.clone()));
         Ok(c)
@@ -89,6 +92,7 @@ impl FeltCore {
                 "{}/v1/voice-chat?session_id={session_id}",
                 self.base
             ))
+            .header(ACCEPT_STREAM, "2")
             .multipart(form)
             .send()
             .await?;
@@ -108,6 +112,7 @@ impl FeltCore {
         let r = self
             .client()?
             .post(format!("{}/v1/text-chat", self.base))
+            .header(ACCEPT_STREAM, "2")
             .json(&json!({ "message": message, "session_id": session_id, "tone": tone }))
             .send()
             .await?;
@@ -448,10 +453,17 @@ fn header(h: &reqwest::header::HeaderMap, name: &str) -> Option<String> {
     Some(percent_decode(raw))
 }
 
-fn stream_fields(id: Option<String>, chunks: Option<String>) -> Option<(String, u32)> {
-    let n: u32 = chunks?.parse().ok()?;
+/// WP-65: felt-core streams her reply while she's still writing it (protocol v2) for a client that says so.
+const ACCEPT_STREAM: &str = "X-Accept-Stream";
+
+fn stream_fields(id: Option<String>, chunks: Option<String>) -> Option<(String, Option<u32>)> {
     let id = id.filter(|s| !s.is_empty())?;
-    (n >= 2).then_some((id, n))
+    let chunks = chunks?;
+    if chunks == "open" {
+        return Some((id, None));
+    }
+    let n: u32 = chunks.parse().ok()?;
+    (n >= 2).then_some((id, Some(n)))
 }
 
 fn percent_decode(s: &str) -> String {
@@ -488,8 +500,13 @@ mod tests {
     fn stream_needs_an_id_and_two_chunks() {
         assert_eq!(
             stream_fields(Some("s1".into()), Some("3".into())),
-            Some(("s1".into(), 3))
+            Some(("s1".into(), Some(3)))
         );
+        assert_eq!(
+            stream_fields(Some("s1".into()), Some("open".into())),
+            Some(("s1".into(), None))
+        );
+        assert_eq!(stream_fields(None, Some("open".into())), None);
         assert_eq!(stream_fields(Some("s1".into()), Some("1".into())), None);
         assert_eq!(stream_fields(None, Some("3".into())), None);
         assert_eq!(stream_fields(Some("s1".into()), Some("x".into())), None);

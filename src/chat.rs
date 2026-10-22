@@ -100,8 +100,10 @@ impl Chat {
         }
     }
 
-    async fn stream_rest(&self, id: &str, total: u32, token: u64) {
-        for n in 1..total {
+    /// The rest of a streamed reply: up to `total` chunks, or for an open one (WP-65) until felt-core says it
+    /// ended (204).
+    async fn stream_rest(&self, id: &str, total: Option<u32>, token: u64) {
+        for n in 1..total.unwrap_or(u32::MAX) {
             let mut tries = 0;
             let audio = loop {
                 if self.generation.load(Ordering::SeqCst) != token {

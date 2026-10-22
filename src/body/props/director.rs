@@ -330,7 +330,7 @@ fn spot_for(ctx: &Ctx, item: &str, near: Option<f64>) -> f64 {
     let spacing = p
         .manifest
         .item(item)
-        .and_then(|e| e["spacing"].as_f64())
+        .and_then(|e| e.get("spacing")?.as_f64())
         .unwrap_or(0.45);
     clutter::pick_spot(&Spot {
         near_x: near.unwrap_or(ctx.current_x.get()),
