@@ -19,6 +19,18 @@ criteria = "safe-to-deploy"
 version = "0.25.10"
 notes = "image-rs; fs writes only in save() APIs (unused by felt-tray), env! only CARGO_MANIFEST_DIR in tests; no build.rs/process/net."
 
+[[audits.jiff]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.2.37 -> 0.2.38"
+notes = "Delta: version/readme metadata, CHANGELOG + README docs only (tzdata 2026e note); no code change."
+
+[[audits.jiff-static]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.2.37 -> 0.2.38"
+notes = "Delta: version bump in Cargo.toml only."
+
 [[audits.mime]]
 who = "Benylin <lealmariop@gmail.com>"
 criteria = "safe-to-deploy"
