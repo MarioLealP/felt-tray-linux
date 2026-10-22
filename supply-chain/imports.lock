@@ -36,8 +36,8 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.jiff-static]]
-version = "0.2.37"
-when = "2026-09-12"
+version = "0.2.38"
+when = "2026-10-06"
 user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
