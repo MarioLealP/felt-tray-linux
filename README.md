@@ -90,7 +90,7 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   (a pw-loopback felt-tray keeps open; PipeWire remembers its slider).
 - **Not yet**: the raw-ntfy fallback when felt-core is down. Not ported on
   purpose: rage-click detection (Wayland would need raw input-device access), stepping aside for fullscreen
-  apps (only with a second view to go to). Plan: `runbooks/felt-desktop-rust-port.md` (workspace repo).
+  apps (only with a second view to go to). (The port plan is in my private notes.)
 
 Modules: `config` · `core` (felt-core client) · `chat` · `mic` · `hotkeys` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`, `world`, `nav`, `ledge`, `outfits`, `tees`, `face`, `lines`, `call`, `window_events`, `props`, `weather`, `sing`).
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).
