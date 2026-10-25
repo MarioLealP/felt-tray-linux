@@ -3,7 +3,7 @@
 # Builds from $startdir (the pkgs/ CI checks out the tagged commit and runs makepkg in place).
 
 pkgname=felt-tray
-pkgver=0.9.1
+pkgver=0.9.2
 pkgrel=1
 pkgdesc="Felt on the Linux desktop: chat window, her voice for typed replies, alert pop-ups, screen reactions (KDE), tray icon / D-Bus API"
 arch=('x86_64')
