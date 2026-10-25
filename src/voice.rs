@@ -4,15 +4,20 @@
 use crate::audio::Player;
 use crate::body;
 
+/// The last thing she said, as JSON (`text`, `at` unix seconds, `source`): the desktop shell's Felt column reads
+/// it over the bus (`LastLine`). "{}" until she says something.
+pub type LastLine = std::sync::Arc<std::sync::Mutex<String>>;
+
 #[derive(Clone)]
 pub struct Voice {
     player: Player,
     body: Option<body::Handle>,
+    last: LastLine,
 }
 
 impl Voice {
-    pub fn new(player: Player, body: Option<body::Handle>) -> Self {
-        Self { player, body }
+    pub fn new(player: Player, body: Option<body::Handle>, last: LastLine) -> Self {
+        Self { player, body, last }
     }
 
     pub fn player(&self) -> Player {
@@ -27,7 +32,8 @@ impl Voice {
     }
 
     /// The first (or only) sentence of a reply. `tag`/`emotion`: felt-core's animation tag and emotion.
-    /// `prompted`: you asked for it (chat), not one of her own lines or a screen reaction.
+    /// `prompted`: you asked for it (chat), not one of her own lines or a screen reaction. `source`: what made her
+    /// say it ("chat", "ambient", "screen") - shown under the line in the shell's Felt column.
     pub fn say(
         &self,
         text: &str,
@@ -35,9 +41,18 @@ impl Voice {
         tag: Option<String>,
         emotion: Option<String>,
         prompted: bool,
+        source: &str,
     ) {
         if text.trim().is_empty() && audio.is_empty() {
             return; // nothing to say (felt-core's "no reaction"): no gesture, no face
+        }
+        if !text.trim().is_empty() {
+            let at = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            *self.last.lock().expect("last line lock") =
+                serde_json::json!({ "text": text.trim(), "at": at, "source": source }).to_string();
         }
         match &self.body {
             Some(b) => b.reply(text, audio, tag, emotion, prompted),

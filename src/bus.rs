@@ -1,5 +1,6 @@
 //! A small session-bus API so a desktop shell can be Felt's face without being Felt: `org.clockmost.Felt` at
-//! `/org/clockmost/Felt` - `ShowChat()`, a `Status` property ("checking" / "online" / "offline"), an `Agenda`
+//! `/org/clockmost/Felt` - `ShowChat()`, `Say(text)` (a line to her, as if typed in the chat window), a `LastLine`
+//! property (JSON: what she last said), a `Status` property ("checking" / "online" / "offline"), an `Agenda`
 //! property (JSON) for the shell's calendar, `GoToLedge()` (her body: onto the ledge nearest the cursor), and `Windows(json)` / `Cursor(json)` for our own KWin scripts
 //! (screen reactions, her gaze; KWin-only callers). The bar's Felt chip uses it; with no such shell, the tray icon does the same job.
 
@@ -37,6 +38,8 @@ pub type SharedAgenda = Arc<Mutex<String>>;
 
 struct FeltBus {
     proxy: Mutex<EventLoopProxy<UiEvent>>,
+    chat: Arc<crate::chat::Chat>,
+    last_line: crate::voice::LastLine,
     status: Arc<SharedStatus>,
     agenda: SharedAgenda,
     /// Window snapshots from our KWin script (screen reactions); None = off.
@@ -68,6 +71,23 @@ impl FeltBus {
             .lock()
             .expect("proxy lock")
             .send_event(UiEvent::ShowChat);
+    }
+
+    /// A line to her from the shell's talk box: sent like one typed in the chat window (she answers out loud).
+    fn say(&self, text: String) -> zbus::fdo::Result<()> {
+        let text = text.trim().to_owned();
+        if text.is_empty() || text.chars().count() > 2000 {
+            return Err(zbus::fdo::Error::InvalidArgs(
+                "empty or over 2000 characters".into(),
+            ));
+        }
+        let chat = self.chat.clone();
+        tokio::spawn(async move {
+            if let Err(e) = chat.send(&text).await {
+                tracing::warn!("bus Say: {e:#}");
+            }
+        });
+        Ok(())
     }
 
     /// Her body: clean house - every prop on the floor or in her hands dissolves.
@@ -124,14 +144,23 @@ impl FeltBus {
         self.agenda.lock().expect("agenda lock").clone()
     }
 
+    /// What she last said: `{"text", "at" (unix seconds), "source" ("chat" / "ambient" / "screen")}`, "{}" before.
+    #[zbus(property)]
+    fn last_line(&self) -> String {
+        self.last_line.lock().expect("last line lock").clone()
+    }
+
     #[zbus(property)]
     fn status(&self) -> String {
         self.status.text().into()
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn serve(
     proxy: EventLoopProxy<UiEvent>,
+    chat: Arc<crate::chat::Chat>,
+    last_line: crate::voice::LastLine,
     status: Arc<SharedStatus>,
     agenda: SharedAgenda,
     windows: Option<watch::Sender<Snapshot>>,
@@ -140,6 +169,8 @@ pub async fn serve(
 ) -> zbus::Result<zbus::Connection> {
     let bus = FeltBus {
         proxy: Mutex::new(proxy),
+        chat,
+        last_line,
         status,
         agenda,
         windows,

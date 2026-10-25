@@ -92,8 +92,14 @@ impl Chat {
         if let Some(action) = &reply.ui_action {
             self.voice.ui_action(action);
         }
-        self.voice
-            .say(&reply.text, reply.audio, reply.tag, reply.emotion, true);
+        self.voice.say(
+            &reply.text,
+            reply.audio,
+            reply.tag,
+            reply.emotion,
+            true,
+            "chat",
+        );
         if let Some((id, total)) = reply.stream {
             let this = Arc::clone(self);
             tokio::spawn(async move { this.stream_rest(&id, total, token).await });

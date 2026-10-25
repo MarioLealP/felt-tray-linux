@@ -109,7 +109,8 @@ fn main() -> Result<()> {
     let with_body = body.is_some();
     let body_bus = body.clone();
     let body_keys = body.clone();
-    let voice = voice::Voice::new(player, body);
+    let last_line: voice::LastLine = Arc::new(std::sync::Mutex::new("{}".into()));
+    let voice = voice::Voice::new(player, body, last_line.clone());
     let chat = chat::Chat::new(core.clone(), voice.clone(), cfg.session_id.clone());
     let chat_keys = chat.clone();
     // "look at this" (the shortcut) -> the screen loop
@@ -122,6 +123,8 @@ fn main() -> Result<()> {
     let bus_conn = rt
         .block_on(bus::serve(
             proxy.clone(),
+            chat.clone(),
+            last_line,
             status.clone(),
             agenda.clone(),
             windows_tx,
