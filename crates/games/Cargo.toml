@@ -9,5 +9,5 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
-regex = "1"
+regex = "1.13.1"
 toml = "0.8"
