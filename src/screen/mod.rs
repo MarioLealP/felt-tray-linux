@@ -5,6 +5,7 @@
 
 pub mod kwin;
 pub mod policy;
+pub mod vision;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -17,7 +18,7 @@ use tokio::sync::watch;
 use tokio::time::{Instant, sleep_until};
 
 use crate::controls::Switches;
-use crate::core::FeltCore;
+use crate::core::{FeltCore, Shot};
 use crate::voice::Voice;
 use kwin::Snapshot;
 use policy::Blocklist;
@@ -37,6 +38,8 @@ pub struct Screen {
     pub sample: Duration,
     pub session_id: String,
     pub switches: Arc<Switches>,
+    /// cm-qplv: describe on this desktop's GPU (the `[vision]` table); `None` = send the image.
+    pub vision: Option<vision::Vision>,
 }
 
 impl Screen {
@@ -112,6 +115,12 @@ impl Screen {
         let Some(target) = decision.target.cloned() else {
             return;
         };
+        if let Some(why) = match &self.vision {
+            Some(v) => v.blocked().await,
+            None => None,
+        } {
+            return tracing::info!("screen: not looking at {} ({why})", target.label());
+        }
 
         let shot = match kwin::capture_window(&self.conn, &target.id).await {
             Ok(img) => img,
@@ -138,10 +147,22 @@ impl Screen {
         }
         seen.insert(target.id.clone(), hash);
 
+        let shot = match &self.vision {
+            Some(v) => match v.describe(&jpeg, &target.app, &target.title).await {
+                Ok(text) => Shot::Seen(text),
+                Err(e) => {
+                    return tracing::warn!(
+                        "screen: felt-vision on {} failed: {e:#}",
+                        target.label()
+                    );
+                }
+            },
+            None => Shot::Jpeg(jpeg),
+        };
         match self
             .core
             .react_screen(
-                jpeg,
+                shot,
                 &target.app,
                 &target.title,
                 trigger,

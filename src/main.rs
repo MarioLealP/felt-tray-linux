@@ -213,6 +213,11 @@ fn main() -> Result<()> {
             sample: Duration::from_secs(cfg.screen_sample_s.max(10)),
             session_id: cfg.session_id.clone(),
             switches: switches.clone(),
+            vision: cfg
+                .vision
+                .clone()
+                .map(screen::vision::Vision::new)
+                .transpose()?,
         };
         rt.spawn(screen.run(rx, look_rx));
     }
