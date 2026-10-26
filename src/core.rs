@@ -34,6 +34,12 @@ pub struct Reply {
     pub emotion: Option<String>,
 }
 
+/// What a screen reaction sends: the window's JPEG, or what the desktop's own vision model saw in it.
+pub enum Shot {
+    Jpeg(Vec<u8>),
+    Seen(String),
+}
+
 pub enum Chunk {
     Audio(Vec<u8>),
     /// 204 done, 404 expired, 502 that chunk's TTS failed - stop either way.
@@ -178,20 +184,26 @@ impl FeltCore {
 
     /// A captured window (already cleared by the capture policy) -> her reaction, or None on 503 (nothing
     /// this time).
+    /// `shot`: the JPEG, or (cm-qplv) the desktop's own description of it - then no image leaves the machine.
     pub async fn react_screen(
         &self,
-        jpeg: Vec<u8>,
+        shot: Shot,
         app: &str,
         title: &str,
         trigger: &str,
         session_id: &str,
         tone: Option<String>,
     ) -> Result<Option<Reply>> {
-        let image = reqwest::multipart::Part::bytes(jpeg)
-            .file_name("screen.jpg")
-            .mime_str("image/jpeg")?;
-        let form = reqwest::multipart::Form::new()
-            .part("image", image)
+        let form = match shot {
+            Shot::Jpeg(jpeg) => {
+                let image = reqwest::multipart::Part::bytes(jpeg)
+                    .file_name("screen.jpg")
+                    .mime_str("image/jpeg")?;
+                reqwest::multipart::Form::new().part("image", image)
+            }
+            Shot::Seen(text) => reqwest::multipart::Form::new().text("seen", text),
+        };
+        let form = form
             .text("app", app.to_owned())
             .text("title", title.to_owned())
             .text("trigger", trigger.to_owned());

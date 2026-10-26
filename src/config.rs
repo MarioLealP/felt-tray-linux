@@ -59,6 +59,45 @@ pub struct Config {
     /// Her body: the Godot overlay felt-tray launches and drives. No `[body]` table = no body.
     #[serde(default)]
     pub body: Option<Body>,
+    /// Describe screenshots on this desktop's GPU and send felt-core the text. No `[vision]` table = the image
+    /// goes to felt-core as before.
+    #[serde(default)]
+    pub vision: Option<Vision>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Vision {
+    /// The local llama-server with the vision model (the `felt-vision` user service), e.g. `http://127.0.0.1:8091`.
+    pub url: String,
+    /// VRAM the model takes once loaded (MB, with headroom for the image encode).
+    #[serde(default = "default_vision_model_mb")]
+    pub model_mb: u64,
+    /// VRAM that must stay free for everything else after it loads (MB).
+    #[serde(default = "default_vision_margin_mb")]
+    pub margin_mb: u64,
+    /// The GPU's sysfs device dir (amdgpu's `mem_info_vram_*`).
+    #[serde(default = "default_vram_dir")]
+    pub vram_dir: PathBuf,
+    /// One description may take this long (s), model load included.
+    #[serde(default = "default_vision_timeout")]
+    pub timeout_s: u64,
+}
+
+fn default_vision_model_mb() -> u64 {
+    2048
+}
+
+fn default_vision_margin_mb() -> u64 {
+    1536
+}
+
+fn default_vram_dir() -> PathBuf {
+    "/sys/class/drm/card1/device".into()
+}
+
+fn default_vision_timeout() -> u64 {
+    20
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -253,6 +292,9 @@ fn parse(text: &str) -> Result<Config> {
     );
     anyhow::ensure!(!c.window_hosts.is_empty(), "window_hosts is empty");
     anyhow::ensure!(!c.player.is_empty(), "player is empty");
+    if let Some(v) = &mut c.vision {
+        v.url = v.url.trim_end_matches('/').to_owned();
+    }
     Ok(c)
 }
 
@@ -294,6 +336,26 @@ mod tests {
     fn the_template_refuses_to_start_until_filled() {
         let err = parse(TEMPLATE).unwrap_err().to_string();
         assert!(err.contains("felt_core_url"), "{err}");
+    }
+
+    #[test]
+    fn the_vision_table_is_optional() {
+        let base = r#"
+            felt_core_url = "https://core.test"
+            app_url = "https://app.test/app/"
+            client_bundle = "/x/bundle.pem"
+            window_hosts = ["app.test"]
+            "#;
+        assert!(parse(base).unwrap().vision.is_none());
+        let c = parse(&format!(
+            "{base}\n[vision]\nurl = \"http://127.0.0.1:8091/\"\n"
+        ))
+        .unwrap();
+        let v = c.vision.unwrap();
+        assert_eq!(
+            (v.url.as_str(), v.model_mb, v.margin_mb),
+            ("http://127.0.0.1:8091", 2048, 1536)
+        );
     }
 
     #[test]

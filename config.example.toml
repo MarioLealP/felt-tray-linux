@@ -68,3 +68,13 @@ tray_icon = true
 # duck_db = 9
 # music_capture = ["pw-record", "--raw", "-P", "{ stream.capture.sink=true }", "--rate", "16000", "--channels", "1",
 #                  "--format", "f32", "-"]      (so she bobs to music; kept in memory only; [] = off)
+
+# Describe screenshots on this desktop's GPU (a local llama-server with a small vision model) and send felt-core
+# only the text. It only looks while enough VRAM is free: the model's own share if it is asleep, plus a margin
+# for everything else. Leave this table out to send the image to felt-core instead.
+# [vision]
+# url = "http://127.0.0.1:8091"
+# model_mb = 2048
+# margin_mb = 1536
+# vram_dir = "/sys/class/drm/card1/device"
+# timeout_s = 20
