@@ -119,8 +119,14 @@ fn free_vram_mb(dir: &std::path::Path) -> Result<u64> {
         let s = std::fs::read_to_string(&p).with_context(|| format!("{}", p.display()))?;
         Ok(s.trim().parse::<u64>()?)
     };
-    let (total, used) = (read("mem_info_vram_total")?, read("mem_info_vram_used")?);
-    Ok(total.saturating_sub(used) / (1024 * 1024))
+    Ok(free_mb(
+        read("mem_info_vram_total")?,
+        read("mem_info_vram_used")?,
+    ))
+}
+
+fn free_mb(total: u64, used: u64) -> u64 {
+    total.saturating_sub(used) / (1024 * 1024)
 }
 
 fn base64(bytes: &[u8]) -> String {
@@ -161,13 +167,9 @@ mod tests {
     }
 
     #[test]
-    fn free_vram_from_sysfs() {
-        let dir = std::env::temp_dir().join(format!("felt-vram-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join("mem_info_vram_total"), "10720641024\n").unwrap();
-        std::fs::write(dir.join("mem_info_vram_used"), "3723141120\n").unwrap();
-        assert_eq!(free_vram_mb(&dir).unwrap(), 6673);
-        std::fs::remove_dir_all(&dir).unwrap();
+    fn free_vram_in_mb() {
+        assert_eq!(free_mb(10_720_641_024, 3_723_141_120), 6673);
+        assert_eq!(free_mb(1, 2), 0);
     }
 
     #[test]
