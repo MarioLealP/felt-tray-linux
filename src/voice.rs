@@ -67,6 +67,13 @@ impl Voice {
         }
     }
 
+    /// The Felt app's hide switch on its own: she stays off screen and still talks, voice only.
+    pub fn set_voice_only(&self, on: bool) {
+        if let Some(b) = &self.body {
+            b.set_voice_only(on);
+        }
+    }
+
     /// The Felt app's quiet switch, for her body (no spoken reactions nobody asked for).
     pub fn set_quiet(&self, quiet: bool) {
         if let Some(b) = &self.body {

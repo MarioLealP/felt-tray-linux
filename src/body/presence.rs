@@ -19,6 +19,11 @@ pub fn visible(ctx: &Ctx) -> bool {
     p.state == VISIBLE || p.state == ARRIVING
 }
 
+/// Off screen but still talking: the hide switch on its own (voice only).
+pub fn voice_only(ctx: &Ctx) -> bool {
+    ctx.voice_only.get() && !visible(ctx)
+}
+
 /// Fully back on screen (the walk in has finished).
 pub fn settled_visible(ctx: &Ctx) -> bool {
     ctx.presence.borrow().state == VISIBLE

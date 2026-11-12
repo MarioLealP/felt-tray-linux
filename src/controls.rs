@@ -1,8 +1,8 @@
 //! Her hide / quiet switches (WP-42.5), set from the Felt app anywhere (they live in felt-core). Polled every
 //! 5 s. Quiet (as on Windows: hide + hush): she stops mid-sentence, says "zip it", leaves the screen and says
 //! nothing on her own (screen reactions, her own lines) - an answer you asked for still speaks. Hide: her body
-//! walks off screen, and nothing unprompted either. Urgent lines
-//! (calendar heads-up) always get through. A heartbeat every 15 s tells felt-core the PC side is alive.
+//! walks off screen but she keeps talking, voice only (Mario 2026-11-12: "speak but hide the avatar"). Urgent
+//! lines (calendar heads-up) always get through. A heartbeat every 15 s tells felt-core the PC side is alive.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -24,9 +24,14 @@ pub struct Switches {
 }
 
 impl Switches {
-    /// May she say something nobody asked for?
+    /// May she say something nobody asked for? Only the quiet switch stops her; hidden she still talks.
     pub fn unprompted_ok(&self) -> bool {
-        !self.quiet.load(Ordering::Relaxed) && !self.hidden.load(Ordering::Relaxed)
+        !self.quiet.load(Ordering::Relaxed)
+    }
+
+    /// Is she off screen (either switch)?
+    pub fn away(&self) -> bool {
+        self.quiet.load(Ordering::Relaxed) || self.hidden.load(Ordering::Relaxed)
     }
 }
 
@@ -63,6 +68,11 @@ pub async fn run(core: Arc<FeltCore>, switches: Arc<Switches>, voice: Voice) {
                 if away != was_away || applied.is_none() {
                     voice.set_hidden(away);
                 }
+                let (voice_only, was_voice_only) =
+                    (s.hide.on && !s.quiet.on, was_hidden && !was_quiet);
+                if voice_only != was_voice_only || applied.is_none() {
+                    voice.set_voice_only(voice_only);
+                }
                 if applied != Some(s.version) {
                     tracing::info!(
                         "controls: v{} quiet={} hide={}",
@@ -79,7 +89,7 @@ pub async fn run(core: Arc<FeltCore>, switches: Arc<Switches>, voice: Voice) {
             let report = json!({
                 "animation": voice.has_body(),
                 "applied": applied,
-                "presence": if switches.unprompted_ok() { "visible" } else { "hidden" },
+                "presence": if switches.away() { "hidden" } else { "visible" },
                 "hushed": switches.quiet.load(Ordering::Relaxed),
             });
             if let Err(e) = core.report_desktop(&report).await {
@@ -105,13 +115,16 @@ mod tests {
     }
 
     #[test]
-    fn quiet_or_hide_stops_unprompted_speech() {
+    fn only_quiet_stops_unprompted_speech() {
         let sw = Switches::default();
-        assert!(sw.unprompted_ok());
+        assert!(sw.unprompted_ok() && !sw.away());
         sw.quiet.store(true, Ordering::Relaxed);
-        assert!(!sw.unprompted_ok());
+        assert!(!sw.unprompted_ok() && sw.away());
         sw.quiet.store(false, Ordering::Relaxed);
         sw.hidden.store(true, Ordering::Relaxed);
-        assert!(!sw.unprompted_ok());
+        assert!(
+            sw.unprompted_ok() && sw.away(),
+            "hidden she still talks, voice only"
+        );
     }
 }

@@ -96,7 +96,7 @@ impl Screen {
         seen: &mut HashMap<String, u64>,
     ) {
         if !self.switches.unprompted_ok() {
-            return; // quiet / hidden: she does not look either
+            return; // quiet: she does not look either
         }
         let blocklist = match Blocklist::load(&self.blocklist) {
             Ok(b) => b,

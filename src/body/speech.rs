@@ -27,8 +27,9 @@ pub struct Sentence {
     pub reaction: Option<Pending>,
 }
 
-/// A reply's first (or only) sentence: she says it with a reaction. `prompted` = you asked for it. While she's
-/// hidden an unprompted line is dropped; one you asked for brings her back.
+/// A reply's first (or only) sentence: she says it with a reaction. `prompted` = you asked for it. Hidden by the
+/// hide switch alone, every line plays voice only and she stays off screen; hidden otherwise (brb, the hide
+/// shortcut, quiet) an unprompted line is dropped and one you asked for brings her back.
 pub fn say(
     ctx: &Rc<Ctx>,
     text: String,
@@ -37,6 +38,14 @@ pub fn say(
     emotion: Option<String>,
     prompted: bool,
 ) {
+    if presence::voice_only(ctx) {
+        if let Some(f) = ctx.filler.take() {
+            f.abort();
+        }
+        ctx.next_generation(); // a reply she was saying on screen stops here
+        ctx.player.play(audio);
+        return;
+    }
     if !presence::visible(ctx) {
         if !prompted {
             return;
@@ -71,6 +80,10 @@ pub fn say(
 
 /// A later sentence of the current reply.
 pub fn more(ctx: &Ctx, text: String, audio: Vec<u8>) {
+    if presence::voice_only(ctx) {
+        ctx.player.play(audio); // queued behind the first sentence, same order
+        return;
+    }
     let _ = ctx.sentences.send(Sentence {
         generation: ctx.generation.get(),
         text,

@@ -1,7 +1,7 @@
 //! Her own lines (WP-25): felt-core's proactive channel - calendar heads-ups, alarms, things she noticed.
 //! Long-polls `/v1/proactive/next`, fetches the item's voice and plays it. If the voice can't be had (felt-voice
-//! down), the line pops up as a notification instead, so it is never silently lost. While she's quiet or
-//! hidden (the app's switches) items go back to felt-core, except urgent ones.
+//! down), the line pops up as a notification instead, so it is never silently lost. While she's quiet (the app's
+//! switch) items go back to felt-core, except urgent ones; hidden, she says them voice only.
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -15,7 +15,7 @@ use crate::voice::Voice;
 
 const MIN_BACKOFF: Duration = Duration::from_secs(5);
 const MAX_BACKOFF: Duration = Duration::from_secs(60);
-/// After handing an item back (quiet / hidden): don't spin on it.
+/// After handing an item back (quiet): don't spin on it.
 const HELD_PAUSE: Duration = Duration::from_secs(10);
 
 #[derive(Debug, Deserialize)]
@@ -47,7 +47,7 @@ pub async fn run(
         };
         backoff = MIN_BACKOFF;
         if !switches.unprompted_ok() && item.kind != "urgent" {
-            // quiet / hidden: hand it back, felt-core keeps it for later
+            // quiet: hand it back, felt-core keeps it for later
             if let Err(e) = core.proactive_requeue(item.id).await {
                 tracing::warn!("proactive: couldn't hand item {} back: {e:#}", item.id);
             }
