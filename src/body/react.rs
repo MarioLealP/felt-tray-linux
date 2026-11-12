@@ -1,7 +1,8 @@
 //! Her reactions to desktop events (WP-15/WP-17): a mood-weighted, no-immediate-repeat pick from the reaction
 //! table (data/reactions.json) - its face, and its body clip when this desktop has it - and, when the row says
 //! `speak`, a spoken line from felt-core (`/v1/react/event`; felt-core owns cooldowns and minimum durations).
-//! Nothing while she's hidden; no spoken line while the quiet switch is on.
+//! Nothing while she's hidden - except the spoken line when the hide switch alone has her off screen (voice
+//! only); no spoken line while the quiet switch is on.
 
 use std::collections::{BTreeMap, HashMap};
 use std::rc::Rc;
@@ -36,10 +37,13 @@ pub async fn reaction(ctx: &Rc<Ctx>, key: &str) {
 }
 
 async fn fire(ctx: &Rc<Ctx>, key: &str) -> Option<Entry> {
+    if presence::voice_only(ctx) {
+        return pick(ctx, key, false); // off screen: no face or clip, but the row still says whether she speaks
+    }
     if !presence::visible(ctx) {
         return None;
     }
-    let picked = pick(ctx, key)?;
+    let picked = pick(ctx, key, true)?;
     if let Some(pose) = picked.get("pose").and_then(Value::as_str) {
         ctx.apply_pose(pose, FACE_HOLD_S).await;
     }
@@ -55,7 +59,8 @@ async fn fire(ctx: &Rc<Ctx>, key: &str) -> Option<Entry> {
     Some(picked)
 }
 
-fn pick(ctx: &Rc<Ctx>, key: &str) -> Option<Entry> {
+/// Picks the row for `key`; `with_prop` also starts the row's prop episode (on screen only).
+fn pick(ctx: &Rc<Ctx>, key: &str, with_prop: bool) -> Option<Entry> {
     let entries = ctx.assets.reactions.get(key)?;
     let mood: HashMap<String, f64> = {
         let mut m = ctx.mood.borrow_mut();
@@ -65,7 +70,11 @@ fn pick(ctx: &Rc<Ctx>, key: &str) -> Option<Entry> {
     let last = ctx.last_pick.borrow().get(key).cloned();
     let mut rng = StdRng::from_rng(&mut rand::rng());
     let picked = pick_reaction(entries, &mood, last.as_deref(), &mut rng)?.clone();
-    if let Some(item) = picked.get("prop").and_then(Value::as_str) {
+    if let Some(item) = picked
+        .get("prop")
+        .and_then(Value::as_str)
+        .filter(|_| with_prop)
+    {
         // the row's prop (afk_start's book ...): its "reaction:<item>" episode, in the background
         super::props::start_event(ctx, &format!("reaction:{item}"));
     }
@@ -90,7 +99,7 @@ pub fn tone(ctx: &Ctx) -> String {
 
 async fn spoken_line(ctx: &Rc<Ctx>, event: &str, details: &Value) {
     match ctx.core.react_event(event, details, &tone(ctx)).await {
-        Ok(Some(r)) if presence::visible(ctx) => {
+        Ok(Some(r)) if presence::visible(ctx) || presence::voice_only(ctx) => {
             tracing::info!("react/event {event}: {} chars", r.text.len());
             speech::say(ctx, r.text, r.audio, r.tag, r.emotion, false);
         }

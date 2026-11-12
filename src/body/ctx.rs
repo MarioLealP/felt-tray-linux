@@ -52,6 +52,8 @@ pub struct Ctx {
     pub sentences: tokio::sync::mpsc::UnboundedSender<Sentence>,
     /// The Felt app's quiet switch: no spoken lines nobody asked for.
     pub quiet: Cell<bool>,
+    /// The Felt app's hide switch on its own: off screen, her lines play voice only (no body, mouth, bubble).
+    pub voice_only: Cell<bool>,
     /// Her world: the platforms, where she stands, the ledge she sits on (world.rs).
     pub world: RefCell<super::world::World>,
     /// The cursor's desktop position, as gaze last saw it.

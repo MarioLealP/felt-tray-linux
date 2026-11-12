@@ -68,6 +68,8 @@ enum Msg {
     Hidden(bool),
     /// The Felt app's quiet switch.
     Quiet(bool),
+    /// The hide switch on its own: off screen, still talking (voice only).
+    VoiceOnly(bool),
     /// Onto the ledge nearest the cursor, and sit.
     GoToLedge,
     /// You're talking to her (the talk shortcut).
@@ -138,6 +140,11 @@ impl Handle {
 
     pub fn set_quiet(&self, quiet: bool) {
         let _ = self.tx.send(Msg::Quiet(quiet));
+    }
+
+    /// The hide switch on its own: she stays off screen and her lines play voice only.
+    pub fn set_voice_only(&self, on: bool) {
+        let _ = self.tx.send(Msg::VoiceOnly(on));
     }
 
     pub fn more(&self, text: &str, audio: Vec<u8>) {
@@ -232,6 +239,7 @@ async fn run(
         exit_left: Cell::new(true),
         sentences,
         quiet: Cell::new(false),
+        voice_only: Cell::new(false),
         sounds: cfg.sounds.clone(),
         hushed_at: Cell::new(None),
         hush_timer: RefCell::new(None),
@@ -292,6 +300,7 @@ async fn run(
             Msg::Hidden(true) => presence::hide(&ctx),
             Msg::Hidden(false) => presence::show(&ctx),
             Msg::Quiet(q) => hush::set(&ctx, q).await,
+            Msg::VoiceOnly(on) => ctx.voice_only.set(on),
             Msg::Listening(on) => actions::listening(&ctx, on).await,
             Msg::Act(what, payload) => {
                 let c = ctx.clone();
