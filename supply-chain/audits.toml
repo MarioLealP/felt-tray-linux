@@ -1,6 +1,12 @@
 
 # cargo-vet audits file
 
+[[audits.arc-swap]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "1.9.3"
+notes = "Reviewed by Claude 2026-11-17 (crates.io source, vorner): atomically swappable Arc. No build.rs; no process, net, fs or env use in src (spawn only in doc comments). Its unsafe (71 uses) is the lock-free pointer swap it exists for - not audited line by line; accepted as a widely used crate."
+
 [[audits.bytemuck]]
 who = "Benylin <lealmariop@gmail.com>"
 criteria = "safe-to-deploy"
@@ -12,6 +18,12 @@ who = "Benylin <lealmariop@gmail.com>"
 criteria = "safe-to-deploy"
 version = "0.1.0"
 notes = "image-rs byte-order readers; 4 unsafe, no build.rs/process/net/fs."
+
+[[audits.crossbeam-queue]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.3.14"
+notes = "Reviewed by Claude 2026-11-17 (crates.io source, crossbeam-rs): concurrent queues. No build.rs; no process, net, fs or env use. Its unsafe (29 uses) is the lock-free queue internals - not audited line by line; accepted as a widely used crate."
 
 [[audits.image]]
 who = "Benylin <lealmariop@gmail.com>"
@@ -48,6 +60,12 @@ who = "Benylin <lealmariop@gmail.com>"
 criteria = "safe-to-deploy"
 delta = "0.2.38 -> 0.2.40"
 notes = "Delta: version bump and Cargo.toml/Cargo.lock metadata only (checked against the 0.2.38 source: no src change)."
+
+[[audits.ksni]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.3.6 -> 0.3.7"
+notes = "Reviewed by Claude 2026-11-17 (crates.io source): adds ksni::current_xdg_activation_token and a D-Bus method that receives an activation token string and queues it (with tests), plus menu helper code. No build.rs; added src lines scanned for unsafe, process, net, fs, env, include and exec patterns - none. Not read line by line (2215 added lines incl. tests and Cargo.lock)."
 
 [[audits.mime]]
 who = "Benylin <lealmariop@gmail.com>"
