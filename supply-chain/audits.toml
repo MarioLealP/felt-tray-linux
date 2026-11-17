@@ -25,11 +25,29 @@ criteria = "safe-to-deploy"
 delta = "0.2.37 -> 0.2.38"
 notes = "Delta: version/readme metadata, CHANGELOG + README docs only (tzdata 2026e note); no code change."
 
+[[audits.jiff]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.2.38 -> 0.2.40"
+notes = "Reviewed by Claude 2026-11-17 (crates.io source, no build.rs): delta is bug fixes and features in civil/fmt/tz/zoned/span; scanned for unsafe, process, net, fs, env, include_*, exec patterns in added lines - none. Not read line by line (1118 added lines). Release published without an individual crates.io publisher (trusted publishing), so the publisher trust in imports.lock cannot cover it."
+
+[[audits.jiff-core]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.1.1 -> 0.1.7"
+notes = "Reviewed by Claude 2026-11-17 (crates.io source, no build.rs): whole delta read (326 added lines): civil/time, timestamp, tz/offset|posix|tzif arithmetic and error handling (panics replaced by errors, a mod-64 hour/minute/second trick checked correct). No unsafe, process, net, fs or env in added lines."
+
 [[audits.jiff-static]]
 who = "Benylin <lealmariop@gmail.com>"
 criteria = "safe-to-deploy"
 delta = "0.2.37 -> 0.2.38"
 notes = "Delta: version bump in Cargo.toml only."
+
+[[audits.jiff-static]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.2.38 -> 0.2.40"
+notes = "Delta: version bump and Cargo.toml/Cargo.lock metadata only (checked against the 0.2.38 source: no src change)."
 
 [[audits.mime]]
 who = "Benylin <lealmariop@gmail.com>"
