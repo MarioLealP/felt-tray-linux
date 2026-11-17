@@ -109,6 +109,12 @@ criteria = "safe-to-deploy"
 delta = "0.103.15 -> 0.103.16"
 notes = "Delta only: RUSTSEC-2026-0382 fix - a const list of distrusted emSign intermediate SPKIs (include_bytes! data) checked during chain building, new Error::CertDistrusted, tests. No unsafe, IO or build script."
 
+[[audits.tao]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.37.1 -> 0.37.2"
+notes = "Reviewed by Claude 2026-11-17 (crates.io source): Linux side read in full (null-pointer checks on the X11 display handle instead of new_unchecked, begin_resize_drag only on touch begin, keycode table fixes); the rest is macOS/iOS (extern C-unwind ABI, objc2 feature flags) and Windows event-loop changes that are not built for felt-tray. No build.rs change; no process, net or fs use in added lines."
+
 [[audits.unicase]]
 who = "Benylin <lealmariop@gmail.com>"
 criteria = "safe-to-deploy"
