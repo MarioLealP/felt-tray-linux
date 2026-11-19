@@ -8,10 +8,10 @@ on:
 
 jobs:
   pkg:
-    uses: pkgs/packaging/.gitea/workflows/rust-pkg.yml@main
+    uses: pkgs/packaging/.gitea/workflows/rust-pkg.yml@cm-18n-target-cache-test
     with:
       pkgname: felt-tray
       # makepkg runs without sudo in CI: runtime + build libs must be preinstalled here
       extra_pacman_deps: "webkit2gtk-4.1 gtk3 libsoup3 xdg-utils"
-    secrets:
-      PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+    # TEST BRANCH (cm-18n): secrets deliberately NOT passed — publish is also
+    # hard-disabled in the test workflow, so test tags can never reach the registry.
