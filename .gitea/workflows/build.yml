@@ -2,8 +2,8 @@
 name: build
 on:
   push:
-    branches: [main]
-    tags: ["v*"]
+    branches: [main, cm-18n-ci-test]  # TEST BRANCH: the extra branch trigger lets same-ref cache
+    tags: ["v*"]                      # probes run as plain pushes (cm-18n)
   pull_request:
 
 jobs:
