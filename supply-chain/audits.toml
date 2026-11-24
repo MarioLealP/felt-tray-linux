@@ -25,6 +25,12 @@ criteria = "safe-to-deploy"
 version = "0.3.14"
 notes = "Reviewed by Claude 2026-11-17 (crates.io source, crossbeam-rs): concurrent queues. No build.rs; no process, net, fs or env use. Its unsafe (29 uses) is the lock-free queue internals - not audited line by line; accepted as a widely used crate."
 
+[[audits.form_urlencoded]]
+who = "Benylin <lealmariop@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.2.2 -> 1.2.3"
+notes = "Reviewed by Felt (Hermes) 2026-11-24 (crates.io source): for_suffix clamps start_position instead of panicking; percent-encoding floor 2.3.0 -> 2.3.2. No unsafe, no I/O."
+
 [[audits.image]]
 who = "Benylin <lealmariop@gmail.com>"
 criteria = "safe-to-deploy"
