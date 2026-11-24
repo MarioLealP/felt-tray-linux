@@ -42,7 +42,7 @@ use std::time::Instant;
 
 use anyhow::{Context, Result};
 use felt_state::{BehaviorState, MonotonicClock};
-use tokio::sync::{mpsc, watch};
+use tokio::sync::{mpsc, oneshot, watch};
 
 use crate::audio::Player;
 use crate::config;
@@ -78,6 +78,14 @@ enum Msg {
     Act(String, serde_json::Value),
     /// Clean house: every prop dissolves.
     ClearProps,
+    /// That app stopped its sound: her mouth closes (nothing else, unlike the stop shortcut).
+    StopExternal,
+    /// A line another app plays (Hermes): her mouth and reaction only.
+    External {
+        text: String,
+        audio: Vec<u8>,
+        ext: speech::External,
+    },
 }
 
 /// felt-tray's side of her body. Cheap to clone; every call returns at once.
@@ -150,6 +158,31 @@ impl Handle {
     pub fn more(&self, text: &str, audio: Vec<u8>) {
         let text = text.to_owned();
         let _ = self.tx.send(Msg::More { text, audio });
+    }
+
+    /// Another app plays `audio` (the WAV of `text`): the receiver resolves when the app may start the sound (her
+    /// mouth is timed, or at once when she stays off screen); it errs when a newer line took over. Send on the
+    /// sender the moment the sound starts.
+    pub fn external(
+        &self,
+        text: &str,
+        audio: Vec<u8>,
+    ) -> (oneshot::Receiver<()>, oneshot::Sender<()>) {
+        let (ready_tx, ready_rx) = oneshot::channel();
+        let (go_tx, go_rx) = oneshot::channel();
+        let _ = self.tx.send(Msg::External {
+            text: text.to_owned(),
+            audio,
+            ext: speech::External {
+                ready: ready_tx,
+                go: go_rx,
+            },
+        });
+        (ready_rx, go_tx)
+    }
+
+    pub fn stop_external(&self) {
+        let _ = self.tx.send(Msg::StopExternal);
     }
 }
 
@@ -314,6 +347,11 @@ async fn run(
                 tokio::task::spawn_local(async move { nav::go_to_ledge(&c).await });
             }
             Msg::More { text, audio } => speech::more(&ctx, text, audio),
+            Msg::External { text, audio, ext } => speech::external(&ctx, text, audio, ext),
+            Msg::StopExternal => {
+                ctx.next_generation();
+                ctx.overlay.lipsync(&[]).await;
+            }
         }
     }
 }

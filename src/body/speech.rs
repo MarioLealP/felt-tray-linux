@@ -25,6 +25,15 @@ pub struct Sentence {
     pub audio: Vec<u8>,
     /// The first sentence of a reply: its reaction.
     pub reaction: Option<Pending>,
+    /// Another app plays this sentence (Hermes); we only move her mouth to it.
+    pub external: Option<External>,
+}
+
+/// A clip another app plays: we answer `ready` once her mouth cues are timed, and its `go` is the moment the
+/// sound really starts (instead of our player's).
+pub struct External {
+    pub ready: oneshot::Sender<()>,
+    pub go: oneshot::Receiver<()>,
 }
 
 /// A reply's first (or only) sentence: she says it with a reaction. `prompted` = you asked for it. Hidden by the
@@ -75,6 +84,30 @@ pub fn say(
         text,
         audio,
         reaction,
+        external: None,
+    });
+}
+
+/// A line another app says out loud (Hermes reading her a mail summary): she reacts and moves her mouth, the
+/// app plays the sound. Off screen, voice only or hushed, she stays put and answers `ready` at once (the app
+/// then plays it without her).
+pub fn external(ctx: &Rc<Ctx>, text: String, audio: Vec<u8>, ext: External) {
+    if presence::voice_only(ctx) || !presence::visible(ctx) || ctx.quiet.get() {
+        let _ = ext.ready.send(());
+        return;
+    }
+    if let Some(f) = ctx.filler.take() {
+        f.abort();
+    }
+    let generation = ctx.next_generation();
+    ctx.bubble.replace(text.clone());
+    let reaction = Some(reply::begin(ctx, &text, None, None, false));
+    let _ = ctx.sentences.send(Sentence {
+        generation,
+        text,
+        audio,
+        reaction,
+        external: Some(ext),
     });
 }
 
@@ -89,6 +122,7 @@ pub fn more(ctx: &Ctx, text: String, audio: Vec<u8>) {
         text,
         audio,
         reaction: None,
+        external: None,
     });
 }
 
@@ -111,7 +145,13 @@ pub async fn run(ctx: Rc<Ctx>, mut rx: mpsc::UnboundedReceiver<Sentence>) {
             continue;
         }
         let wav = s.audio.clone();
-        let started = ctx.player.play_then(s.audio);
+        let started = match s.external {
+            Some(ext) => {
+                let _ = ext.ready.send(()); // the app starts the sound now and tells us
+                ext.go
+            }
+            None => ctx.player.play_then(s.audio),
+        };
         tokio::task::spawn_local(speak(ctx.clone(), started, cues, speaking_s, clips, wav));
     }
 }

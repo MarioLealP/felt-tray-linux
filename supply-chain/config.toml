@@ -397,6 +397,10 @@ criteria = "safe-to-deploy"
 version = "1.10.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.httpdate]]
+version = "1.0.3"
+criteria = "safe-to-deploy"
+
 [[exemptions.hyper]]
 version = "1.12.0"
 criteria = "safe-to-deploy"
