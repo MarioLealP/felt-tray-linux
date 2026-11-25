@@ -64,6 +64,11 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   ("checking" / "online" / "offline") and an `Agenda` property: the next `agenda_days` of her calendar as JSON
   (felt-core `/v1/calendar/upcoming`, refreshed every 5 min) for a shell's calendar - she reminds, it only shows. With `tray_icon = false` a shell's own button uses it instead of the icon
   (clockmost-shell's Felt chip does).
+- **Lines Hermes plays** (`[body] speak_port`, default 8766, 0 = off; `src/speak.rs`): Hermes Desktop posts the WAV
+  of a line it's about to say (`POST /speak?text=`), she times her mouth to it (Rhubarb) and answers when ready;
+  Hermes starts the sound and posts `/go`, and her mouth starts with it (`/stop` closes it). Off screen or hushed
+  she answers at once and Hermes plays without her. Loopback only; refused for any web page origin (only none or
+  the packaged app's `null`) and any Host but ours.
 - **Her body, also**: idle variety and ambient actions (walks, sitting, sleepy late at night); the hide switch
   walks her off screen, quiet (= hide + hush) adds "zip it" and a line when it's lifted (`sounds`: her recorded
   clips); she notices games (KWin's `steam_app_*` windows + games.toml), AFK and GPU heat (amdgpu edge) through

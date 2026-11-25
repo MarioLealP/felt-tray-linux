@@ -16,6 +16,7 @@ mod notify;
 mod proactive;
 mod raw_alerts;
 mod screen;
+mod speak;
 mod tray;
 mod voice;
 mod window;
@@ -107,6 +108,11 @@ fn main() -> Result<()> {
         _ => (None, None),
     };
     let with_body = body.is_some();
+    if let (Some(b), Some(h)) = (&cfg.body, &body)
+        && b.speak_port != 0
+    {
+        rt.spawn(speak::serve(b.speak_port, h.clone()));
+    }
     let body_bus = body.clone();
     let body_keys = body.clone();
     let last_line: voice::LastLine = Arc::new(std::sync::Mutex::new("{}".into()));

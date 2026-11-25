@@ -107,7 +107,7 @@ version = "4.6.9"
 criteria = "safe-to-deploy"
 
 [[exemptions.cookie]]
-version = "0.18.2"
+version = "0.18.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.core-foundation]]
@@ -395,6 +395,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.httparse]]
 version = "1.10.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.httpdate]]
+version = "1.0.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.hyper]]
@@ -1052,7 +1056,7 @@ version = "0.9.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.url]]
-version = "2.5.8"
+version = "2.5.9"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]

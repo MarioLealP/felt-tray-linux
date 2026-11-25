@@ -138,6 +138,13 @@ pub struct Body {
     /// Captures what the speakers play (16 kHz mono f32 on stdout) so she can bob to music; [] = off.
     #[serde(default = "default_music_capture")]
     pub music_capture: Vec<String>,
+    /// Loopback port where Hermes hands her the lines it plays itself, so her mouth moves with them; 0 = off.
+    #[serde(default = "default_speak_port")]
+    pub speak_port: u16,
+}
+
+fn default_speak_port() -> u16 {
+    8766
 }
 
 fn default_call_apps() -> Vec<String> {
