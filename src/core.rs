@@ -149,39 +149,6 @@ impl FeltCore {
         })
     }
 
-    pub async fn latest_notice(&self) -> Result<u64> {
-        let r = self
-            .client()?
-            .get(format!("{}/v1/notices/latest", self.base))
-            .timeout(Duration::from_secs(15))
-            .send()
-            .await?
-            .error_for_status()?;
-        let v: serde_json::Value = r.json().await?;
-        v["id"].as_u64().context("no id in /v1/notices/latest")
-    }
-
-    pub async fn notices_after(&self, after: u64) -> Result<Vec<crate::notices::Notice>> {
-        let r = self
-            .client()?
-            .get(format!("{}/v1/notices?after={after}", self.base))
-            .timeout(Duration::from_secs(15))
-            .send()
-            .await?
-            .error_for_status()?;
-        Ok(r.json().await?)
-    }
-
-    pub async fn mark_handled(&self, incident: u64) -> Result<bool> {
-        let r = self
-            .client()?
-            .post(format!("{}/v1/incidents/{incident}/handled", self.base))
-            .timeout(Duration::from_secs(15))
-            .send()
-            .await?;
-        Ok(r.status().is_success())
-    }
-
     /// A captured window (already cleared by the capture policy) -> her reaction, or None on 503 (nothing
     /// this time).
     /// `shot`: the JPEG, or (cm-qplv) the desktop's own description of it - then no image leaves the machine.
@@ -236,40 +203,6 @@ impl FeltCore {
             emotion,
             audio: r.bytes().await?.to_vec(),
         }))
-    }
-
-    /// WP-25 long-poll: the next proactive item, or None when nothing came within the window.
-    pub async fn proactive_next(&self) -> Result<Option<crate::proactive::Item>> {
-        const WAIT: u64 = 25;
-        let r = self
-            .client()?
-            .get(format!("{}/v1/proactive/next?timeout={WAIT}", self.base))
-            .timeout(Duration::from_secs(WAIT + 10))
-            .send()
-            .await?;
-        if r.status() == StatusCode::NO_CONTENT {
-            return Ok(None);
-        }
-        Ok(Some(r.error_for_status()?.json().await?))
-    }
-
-    pub async fn proactive_audio(&self, id: u64) -> Result<Vec<u8>> {
-        let r = self
-            .client()?
-            .get(format!("{}/v1/proactive/{id}/audio", self.base))
-            .send()
-            .await?
-            .error_for_status()?;
-        Ok(r.bytes().await?.to_vec())
-    }
-
-    pub async fn proactive_requeue(&self, id: u64) -> Result<()> {
-        self.client()?
-            .post(format!("{}/v1/proactive/{id}/requeue", self.base))
-            .send()
-            .await?
-            .error_for_status()?;
-        Ok(())
     }
 
     pub async fn controls(&self) -> Result<crate::controls::State> {
@@ -416,17 +349,6 @@ impl FeltCore {
             .send()
             .await?;
         Ok(r.status())
-    }
-
-    /// The server's ntfy alerts as a stream of JSON lines (Caddy: tray identity only, it adds the token).
-    pub async fn raw_alerts(&self) -> Result<reqwest::Response> {
-        let r = self
-            .client()?
-            .get(format!("{}/ntfy/clockmost/json", self.base))
-            .timeout(Duration::from_secs(24 * 3600)) // a long-lived stream; reconnects if it drops
-            .send()
-            .await?;
-        Ok(r.error_for_status()?)
     }
 
     /// Is she reachable (cert accepted, felt-core up)? The cheapest route the tray may call.
