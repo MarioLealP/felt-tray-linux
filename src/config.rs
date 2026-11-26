@@ -27,6 +27,7 @@ pub struct Config {
     pub tray_icon: bool,
     /// Ignored since 0.11 (her alert pop-ups moved to Hermes' Inbox); kept so old configs still load.
     #[serde(default)]
+    #[allow(dead_code, reason = "accepted for old configs, never read")]
     pub notices: Option<bool>,
     /// Chat window size (logical pixels).
     #[serde(default = "default_window_size")]
@@ -39,9 +40,11 @@ pub struct Config {
     pub agenda_days: u32,
     /// Ignored since 0.11 (server alerts go to Hermes' Inbox; ntfy is the fallback); kept so old configs still load.
     #[serde(default)]
+    #[allow(dead_code, reason = "accepted for old configs, never read")]
     pub raw_alerts: Option<bool>,
     /// Ignored since 0.11 (her heads-ups and alarms are Hermes' now); kept so old configs still load.
     #[serde(default)]
+    #[allow(dead_code, reason = "accepted for old configs, never read")]
     pub proactive: Option<bool>,
     /// React to what's on screen (KDE Plasma/KWin only). Off unless asked for.
     #[serde(default)]
