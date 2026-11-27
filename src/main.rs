@@ -11,10 +11,6 @@ mod controls;
 mod core;
 mod hotkeys;
 mod mic;
-mod notices;
-mod notify;
-mod proactive;
-mod raw_alerts;
 mod screen;
 mod speak;
 mod tray;
@@ -35,8 +31,6 @@ use crate::window::{ChatWindow, WindowSetup};
 #[derive(Debug)]
 pub enum UiEvent {
     ShowChat,
-    /// Open the chat window at a place in the app, e.g. `#systems/12` (a pop-up's details).
-    OpenAt(String),
     Quit,
     /// A `text_chat` call from the app finished; hand the result back to its promise.
     Resolve {
@@ -70,17 +64,6 @@ fn main() -> Result<()> {
                 "No config yet. Run `felt-tray --init`, then fill in {}.",
                 p.display()
             );
-            if let Ok((n, _)) = rt.block_on(notify::Notifier::connect()) {
-                let popup = notify::Popup {
-                    summary: "Felt isn't set up",
-                    body: &msg,
-                    actions: &[],
-                    critical: false,
-                    sticky: true,
-                    sound: false,
-                };
-                let _ = rt.block_on(n.show(&popup));
-            }
             anyhow::bail!(msg);
         }
     };
@@ -146,7 +129,6 @@ fn main() -> Result<()> {
     } else {
         None
     };
-    let status_raw = status.clone();
     let (status_tray, ping_core) = (tray.clone(), core.clone());
     rt.spawn(async move {
         loop {
@@ -173,32 +155,6 @@ fn main() -> Result<()> {
     }
     let switches = Arc::new(controls::Switches::default());
     rt.spawn(controls::run(core.clone(), switches.clone(), voice.clone()));
-    let notifier = rt.block_on(notify::Notifier::connect());
-    if cfg.proactive {
-        let n = notifier.as_ref().ok().map(|(n, _)| n.clone());
-        rt.spawn(proactive::run(
-            core.clone(),
-            voice.clone(),
-            n,
-            switches.clone(),
-        ));
-    }
-    if cfg.raw_alerts
-        && let Ok((n, _)) = &notifier
-    {
-        raw_alerts::start(core.clone(), n.clone(), status_raw);
-    }
-    match notifier {
-        Ok(_) if !cfg.notices => {}
-        Ok(n) => notices::start(
-            core.clone(),
-            n,
-            proxy.clone(),
-            config::data_dir()?.join("notices.json"),
-        ),
-        Err(e) => tracing::warn!("no desktop notifications, her alerts won't pop up: {e}"),
-    }
-
     // KWin: keeps her overlay windows above; feeds screen reactions when they're on. Harmless elsewhere.
     if let Err(e) = rt.block_on(screen::kwin::load_script(&bus_conn)) {
         tracing::info!("no KWin script (not on KDE?): {e:#}");
@@ -290,15 +246,11 @@ fn main() -> Result<()> {
     event_loop.run(move |event, target, flow| {
         *flow = ControlFlow::Wait;
         match event {
-            Event::UserEvent(e @ (UiEvent::ShowChat | UiEvent::OpenAt(_))) => {
+            Event::UserEvent(UiEvent::ShowChat) => {
                 // ksni can't take the bar's xdg-activation token, so an existing window can't raise
                 // itself on Wayland; a fresh window always maps in front (the app reloads its history).
-                let fragment = match &e {
-                    UiEvent::OpenAt(f) => Some(f.as_str()),
-                    _ => None,
-                };
                 win = None;
-                match ChatWindow::open(target, &mut ctx, &setup, fragment) {
+                match ChatWindow::open(target, &mut ctx, &setup, None) {
                     Ok(w) => win = Some(w),
                     Err(e) => tracing::error!("can't open the chat window: {e:#}"),
                 }

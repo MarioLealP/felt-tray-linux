@@ -25,9 +25,10 @@ pub struct Config {
     /// Show the tray icon. Off when the desktop shell has its own Felt button (it calls the D-Bus API instead).
     #[serde(default = "default_true")]
     pub tray_icon: bool,
-    /// Her alert lines as desktop notifications.
-    #[serde(default = "default_true")]
-    pub notices: bool,
+    /// Ignored since 0.11 (her alert pop-ups moved to Hermes' Inbox); kept so old configs still load.
+    #[serde(default)]
+    #[allow(dead_code, reason = "accepted for old configs, never read")]
+    pub notices: Option<bool>,
     /// Chat window size (logical pixels).
     #[serde(default = "default_window_size")]
     pub window_size: [f64; 2],
@@ -37,13 +38,14 @@ pub struct Config {
     /// Days of her calendar to offer the shell (D-Bus `Agenda`); 0 = off.
     #[serde(default = "default_agenda_days")]
     pub agenda_days: u32,
-    /// The server's alerts straight from ntfy while felt-core is down (Caddy's /ntfy/clockmost/json on the machine
-    /// host - clockmost).
-    #[serde(default = "default_true")]
-    pub raw_alerts: bool,
-    /// Her own lines (felt-core's proactive channel), spoken.
-    #[serde(default = "default_true")]
-    pub proactive: bool,
+    /// Ignored since 0.11 (server alerts go to Hermes' Inbox; ntfy is the fallback); kept so old configs still load.
+    #[serde(default)]
+    #[allow(dead_code, reason = "accepted for old configs, never read")]
+    pub raw_alerts: Option<bool>,
+    /// Ignored since 0.11 (her heads-ups and alarms are Hermes' now); kept so old configs still load.
+    #[serde(default)]
+    #[allow(dead_code, reason = "accepted for old configs, never read")]
+    pub proactive: Option<bool>,
     /// React to what's on screen (KDE Plasma/KWin only). Off unless asked for.
     #[serde(default)]
     pub screen_reactions: bool,

@@ -23,13 +23,6 @@ tray_icon = true
 
 # --- optional (defaults shown) ---
 
-# Her alert lines as desktop notifications (with Details / Handled buttons).
-# notices = true
-
-# Her own lines (calendar heads-ups, alarms, things she noticed), spoken; shown as a notification when her voice
-# is down.
-# proactive = true
-
 # Days of her calendar offered to a desktop shell's calendar (D-Bus property `Agenda`, JSON); 0 = off.
 # Felt reminds you herself - the shell only shows.
 # agenda_days = 14

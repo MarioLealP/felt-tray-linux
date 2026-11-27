@@ -33,12 +33,6 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   browser. A click always opens it fresh in front (no Wayland activation token through ksni).
 - **Her voice**: WAV clips through the configured `player` (default `pw-play`, PipeWire); long replies stream
   sentence by sentence (WP-54); a new line stops the old reply. Voice down on the server = text only.
-- **Her alert lines** (`notices = true`): felt-core decides what pops, sounds and stays; actions Details (chat at
-  `#systems/<id>`) and Handled. Position in `$XDG_DATA_HOME/felt-tray/notices.json`; after a restart at most 5
-  missed lines pop.
-- **Her own lines** (`proactive = true`): long-polls felt-core's proactive channel (WP-25: calendar heads-ups,
-  alarms, things she noticed) and speaks them; when her voice can't be fetched the line pops up as a
-  notification instead of being re-queued forever.
 - **Hide / quiet switches** (WP-42.5, from the Felt app anywhere): polled every 5 s from felt-core. Quiet cuts
   her off mid-sentence and stops everything unprompted (screen reactions, her own lines - urgent ones still come
   through; items go back to felt-core); hide does the same until there's a body to hide. Heartbeat every 15 s to
@@ -97,5 +91,5 @@ On the clockmost desktop, `clockmost-desktop-config` does steps 2-3 (`clockmost-
   purpose: rage-click detection (Wayland would need raw input-device access), stepping aside for fullscreen
   apps (only with a second view to go to). (The port plan is in my private notes.)
 
-Modules: `config` · `core` (felt-core client) · `chat` · `mic` · `hotkeys` · `voice` · `audio` · `tray` · `bus` · `window` · `notices` · `notify` · `screen` (`policy`, `kwin`) · `proactive` · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`, `world`, `nav`, `ledge`, `outfits`, `tees`, `face`, `lines`, `call`, `window_events`, `props`, `weather`, `sing`).
+Modules: `config` · `core` (felt-core client) · `chat` · `mic` · `hotkeys` · `voice` · `audio` · `tray` · `bus` · `window` · `screen` (`policy`, `kwin`) · `controls` · `body` (`overlay`, `speech`, `reply`, `lipsync`, `gaze`, `mood`, `events`, `assets`, `clock`, `ambient`, `moves`, `presence`, `hush`, `react`, `signals`, `music`, `world`, `nav`, `ledge`, `outfits`, `tees`, `face`, `lines`, `call`, `window_events`, `props`, `weather`, `sing`).
 Checks: `just check`. Release: `./release.sh X.Y.Z` (pkgs CI builds, scans, publishes).
